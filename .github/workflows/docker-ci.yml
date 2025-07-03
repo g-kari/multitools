@@ -1,0 +1,180 @@
+name: Docker Multi-Service CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  docker-compose-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Build and start services
+      run: |
+        docker-compose up -d --build
+        sleep 30
+    
+    - name: Test backend health
+      run: |
+        curl -f http://localhost:8080/health || exit 1
+        echo "Backend health check passed"
+    
+    - name: Test frontend availability
+      run: |
+        curl -f http://localhost:3000 || exit 1
+        echo "Frontend availability check passed"
+    
+    - name: Test full stack integration
+      run: |
+        # Test the complete flow through nginx proxy
+        response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:80/health)
+        if [ "$response" -eq 200 ]; then
+          echo "Full stack integration test passed"
+        else
+          echo "Full stack integration test failed with status code: $response"
+          exit 1
+        fi
+    
+    - name: Show service logs
+      if: failure()
+      run: |
+        echo "=== Backend logs ==="
+        docker-compose logs backend
+        echo "=== Frontend logs ==="
+        docker-compose logs frontend
+        echo "=== Nginx logs ==="
+        docker-compose logs nginx
+    
+    - name: Clean up
+      if: always()
+      run: docker-compose down
+
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+  build-and-publish:
+    needs: [docker-compose-test]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+    
+    - name: Login to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Build and push backend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./backend
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/ogp-verification-backend:latest
+          ghcr.io/${{ github.repository_owner }}/ogp-verification-backend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+    
+    - name: Build and push frontend image
+      uses: docker/build-push-action@v5
+      with:
+        context: ./frontend
+        push: true
+        tags: |
+          ghcr.io/${{ github.repository_owner }}/ogp-verification-frontend:latest
+          ghcr.io/${{ github.repository_owner }}/ogp-verification-frontend:${{ github.sha }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    needs: [build-and-publish]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to staging environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.STAGING_HOST }}
+        username: ${{ secrets.STAGING_USER }}
+        key: ${{ secrets.STAGING_SSH_KEY }}
+        script: |
+          cd /opt/ogp-staging
+          
+          # Pull latest images
+          docker-compose pull
+          
+          # Update and restart services
+          docker-compose up -d
+          
+          # Health check
+          sleep 30
+          curl -f http://localhost:8080/health || exit 1
+          
+          echo "Staging deployment completed successfully!"
+
+  deploy-production:
+    needs: [build-and-publish, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to production environment
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USER }}
+        key: ${{ secrets.PRODUCTION_SSH_KEY }}
+        script: |
+          cd /opt/ogp-production
+          
+          # Backup current deployment
+          docker-compose down
+          docker tag ghcr.io/${{ github.repository_owner }}/ogp-verification-backend:latest ghcr.io/${{ github.repository_owner }}/ogp-verification-backend:backup
+          docker tag ghcr.io/${{ github.repository_owner }}/ogp-verification-frontend:latest ghcr.io/${{ github.repository_owner }}/ogp-verification-frontend:backup
+          
+          # Pull latest images
+          docker-compose pull
+          
+          # Update and restart services
+          docker-compose up -d
+          
+          # Health check
+          sleep 30
+          curl -f http://localhost:8080/health || exit 1
+          
+          echo "Production deployment completed successfully!"

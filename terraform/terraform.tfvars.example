@@ -1,0 +1,20 @@
+# Sakura Cloud Configuration
+sakuracloud_token  = "your-sakura-cloud-token"
+sakuracloud_secret = "your-sakura-cloud-secret"
+sakuracloud_zone   = "tk1a"
+
+# Cloudflare Configuration
+cloudflare_api_token = "your-cloudflare-api-token"
+cloudflare_zone_id   = "your-cloudflare-zone-id"
+
+# Domain Configuration
+domain_name = "example.com"
+create_cloudflare_zone = false
+
+# Server Configuration
+server_password = "your-secure-password"
+ssh_public_key  = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC... your-public-key"
+
+# Project Configuration
+environment  = "production"
+project_name = "ogp-verification"

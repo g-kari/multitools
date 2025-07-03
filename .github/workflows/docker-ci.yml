@@ -126,7 +126,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Deploy to staging environment
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.2.2
       with:
         host: ${{ secrets.STAGING_HOST }}
         username: ${{ secrets.STAGING_USER }}
@@ -155,7 +155,7 @@ jobs:
     - uses: actions/checkout@v4
     
     - name: Deploy to production environment
-      uses: appleboy/ssh-action@v1.0.0
+      uses: appleboy/ssh-action@v1.2.2
       with:
         host: ${{ secrets.PRODUCTION_HOST }}
         username: ${{ secrets.PRODUCTION_USER }}

@@ -217,6 +217,12 @@ bun test --coverage
 ### Development Environment
 Use Docker Compose for local development with hot reload enabled.
 
+### Testing and Verification
+- **Docker-only testing**: ALL service testing, verification, and development work MUST use Docker
+- **No local installation**: Do NOT install Go, Bun, or other runtime dependencies directly on the host system
+- **Containerized verification**: Use `docker-compose up -d` for all service validation and testing
+- **Clean environment**: This approach prevents local environment contamination and ensures consistency
+
 ## Monitoring
 
 - **Health Check**: `/health` endpoint
@@ -236,6 +242,7 @@ Use Docker Compose for local development with hot reload enabled.
 - **Test with real services**: Use the production-ready code for testing and development
 - **Maintain technology consistency**: Follow the established Go + React + Bun + Terraform stack
 - **Mandatory TODO.md updates**: ALL work must be tracked and updated in TODO.md in real-time
+- **Docker-first testing**: ALL service testing and verification MUST use Docker to avoid local environment contamination
 
 ## Architecture Notes
 

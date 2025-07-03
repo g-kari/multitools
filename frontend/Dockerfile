@@ -1,18 +1,15 @@
-FROM oven/bun:1 AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
-COPY package.json bun.lockb* ./
-RUN bun install --frozen-lockfile
+# Install Vite globally
+RUN npm install -g vite
+
+COPY package.json ./
+RUN npm install
 
 COPY . .
-RUN bun run build
 
-FROM nginx:alpine
+EXPOSE 3000
 
-COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/nginx.conf
-
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

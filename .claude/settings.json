@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "stop": [
+      {
+        "name": "Auto commit and push",
+        "command": "git add . && git commit -m \"Auto-commit: Claude Code session completed 🤖\" && git push origin main",
+        "description": "Automatically commits and pushes changes when Claude Code session ends"
+      }
+    ]
+  }
+}

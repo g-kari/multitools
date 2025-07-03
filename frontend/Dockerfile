@@ -1,6 +1,9 @@
-FROM node:18-alpine
+FROM alpine:latest
 
 WORKDIR /app
+
+# Install Node.js and npm
+RUN apk add --no-cache nodejs npm
 
 # Install Vite globally
 RUN npm install -g vite

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -88,6 +89,10 @@ func (h *OGPHandler) getClientIP(r *http.Request) string {
 	xff := r.Header.Get("X-Forwarded-For")
 	if xff != "" {
 		return xff
+	}
+	// Extract IP from host:port format
+	if idx := strings.LastIndex(r.RemoteAddr, ":"); idx != -1 {
+		return r.RemoteAddr[:idx]
 	}
 	return r.RemoteAddr
 }

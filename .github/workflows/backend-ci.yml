@@ -1,12 +1,13 @@
 name: Backend CI/CD
 
 on:
-  push:
-    branches: [ main, develop ]
-    paths: [ 'backend/**' ]
-  pull_request:
-    branches: [ main ]
-    paths: [ 'backend/**' ]
+  workflow_dispatch: # Manual trigger only
+  # push:
+  #   branches: [ main, develop ]
+  #   paths: [ 'backend/**' ]
+  # pull_request:
+  #   branches: [ main ]
+  #   paths: [ 'backend/**' ]
 
 jobs:
   test:

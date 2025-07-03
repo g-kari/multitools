@@ -149,11 +149,19 @@ docker-compose down
 
 ## Development Workflow
 
-1. **Always commit completed work**: When finishing any task or making significant progress, commit changes with descriptive messages
-2. **Use feature branches**: Create branches for new features or major changes
-3. **Write tests**: Implement unit tests for new functionality
-4. **Document changes**: Update relevant documentation when making changes
-5. **Test before deployment**: Run all tests and type checks before pushing
+1. **Task Management with TODO.md**: ALL work status, content, and progress MUST be managed in TODO.md
+   - Update TODO.md before starting any task
+   - Mark tasks as in-progress when beginning work
+   - Mark tasks as completed when finished
+   - Add new tasks as they are discovered
+   - Document any blockers or issues in TODO.md
+   - Use TODO.md as the single source of truth for project status
+
+2. **Always commit completed work**: When finishing any task or making significant progress, commit changes with descriptive messages
+3. **Use feature branches**: Create branches for new features or major changes
+4. **Write tests**: Implement unit tests for new functionality
+5. **Document changes**: Update relevant documentation when making changes
+6. **Test before deployment**: Run all tests and type checks before pushing
 
 ## Commit Guidelines
 
@@ -215,6 +223,19 @@ Use Docker Compose for local development with hot reload enabled.
 - **Metrics**: Response times, error rates, request counts
 - **Logs**: Structured JSON logging
 - **Alerts**: Configure for high error rates or downtime
+
+## Development Restrictions
+
+### Prohibited Actions
+- **DO NOT create mock servers**: This project uses real Go and React implementations only
+- **DO NOT create Python/Flask alternatives**: Use the existing Go backend service
+- **DO NOT bypass the official technology stack**: Stick to Go + React + TypeScript
+
+### Required Approach
+- **Use official implementations**: Always work with the actual Go backend and React frontend
+- **Test with real services**: Use the production-ready code for testing and development
+- **Maintain technology consistency**: Follow the established Go + React + Bun + Terraform stack
+- **Mandatory TODO.md updates**: ALL work must be tracked and updated in TODO.md in real-time
 
 ## Architecture Notes
 

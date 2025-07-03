@@ -1,0 +1,117 @@
+version: 2
+updates:
+  # Go backend dependencies
+  - package-ecosystem: "gomod"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "g-kari"
+    assignees:
+      - "g-kari"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "go"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # Frontend (Bun/npm) dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "g-kari"
+    assignees:
+      - "g-kari"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+      - "javascript"
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions workflow dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "g-kari"
+    assignees:
+      - "g-kari"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "g-kari"
+    assignees:
+      - "g-kari"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "backend"
+
+  - package-ecosystem: "docker"
+    directory: "/frontend"
+    schedule:
+      interval: "monthly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "g-kari"
+    assignees:
+      - "g-kari"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "frontend"

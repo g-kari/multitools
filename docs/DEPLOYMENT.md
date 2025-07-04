@@ -1,77 +1,77 @@
-# OGP Verification Service - Deployment Guide
+# OGP 検証サービス - デプロイメントガイド
 
-This guide covers deploying the OGP Verification Service to production environments using various deployment strategies.
+このガイドでは、さまざまなデプロイメント戦略を使用して OGP 検証サービスを本番環境にデプロイする方法について説明します。
 
-## 📋 Overview
+## 📋 概要
 
-### Deployment Options
-1. **Docker Compose** (Recommended for single server)
-2. **Kubernetes** (For container orchestration)
-3. **Sakura VPS + Cloudflare** (Cost-effective production)
-4. **Cloud Platforms** (AWS, GCP, Azure)
+### デプロイメント オプション
+1. **Docker Compose**（単一サーバー推奨）
+2. **Kubernetes**（コンテナーオーケストレーション用）
+3. **Sakura VPS + Cloudflare**（コスト効率的な本番環境）
+4. **クラウドプラットフォーム**（AWS、GCP、Azure）
 
-### Architecture
-- **Backend**: Go API server (Docker container)
-- **Frontend**: React SPA (Static files served by Nginx)
-- **Proxy**: Nginx (SSL termination, reverse proxy)
-- **DNS**: Cloudflare (CDN, DDoS protection)
+### アーキテクチャ
+- **バックエンド**: Go API サーバー（Docker コンテナー）
+- **フロントエンド**: React SPA（Nginx で配信される静的ファイル）
+- **プロキシ**: Nginx（SSL 終端、リバースプロキシ）
+- **DNS**: Cloudflare（CDN、DDoS 保護）
 
-## 🚀 Production Deployment (Docker Compose)
+## 🚀 本番デプロイメント（Docker Compose）
 
-### Prerequisites
-- Ubuntu 22.04 LTS server
-- Docker and Docker Compose installed
-- Domain name with DNS access
-- SSL certificate (Let's Encrypt recommended)
+### 前提条件
+- Ubuntu 22.04 LTS サーバー
+- Docker と Docker Compose がインストール済み
+- DNS アクセス可能なドメイン名
+- SSL 証明書（Let's Encrypt 推奨）
 
-### 1. Server Preparation
+### 1. サーバーの準備
 
 ```bash
-# Update system
+# システムの更新
 sudo apt update && sudo apt upgrade -y
 
-# Install Docker
+# Docker のインストール
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 sudo usermod -aG docker $USER
 
-# Install Docker Compose
+# Docker Compose のインストール
 sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 
-# Install Nginx
+# Nginx のインストール
 sudo apt install -y nginx certbot python3-certbot-nginx
 
-# Configure firewall
+# ファイアウォールの設定
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw enable
 ```
 
-### 2. Application Deployment
+### 2. アプリケーションのデプロイメント
 
 ```bash
-# Clone repository
+# リポジトリのクローン
 git clone <repository-url> /opt/ogp-service
 cd /opt/ogp-service
 
-# Create production environment file
+# 本番環境ファイルの作成
 cat > .env.production << EOF
-# Backend Configuration
+# バックエンド設定
 PORT=8080
 CORS_ORIGINS=https://yourdomain.com
 RATE_LIMIT=20
 
-# Frontend Configuration
+# フロントエンド設定
 VITE_API_URL=https://api.yourdomain.com
 VITE_ENV=production
 
-# Database Configuration (if needed)
+# データベース設定（必要に応じて）
 # DATABASE_URL=postgresql://user:pass@localhost/ogp_service
 EOF
 
-# Create production Docker Compose file
+# 本番用 Docker Compose ファイルの作成
 cat > docker-compose.prod.yml << EOF
 services:
   backend:
@@ -139,33 +139,33 @@ networks:
 EOF
 ```
 
-### 3. Frontend Production Build
+### 3. フロントエンドの本番ビルド
 
-Create `frontend/Dockerfile.prod`:
+`frontend/Dockerfile.prod` を作成：
 
 ```dockerfile
-# Build stage
+# ビルドステージ
 FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy package files
+# パッケージファイルのコピー
 COPY package*.json ./
 RUN npm ci --only=production
 
-# Copy source and build
+# ソースのコピーとビルド
 COPY . .
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
 
-# Production stage
+# 本番ステージ
 FROM nginx:alpine
 
-# Copy built files
+# ビルドされたファイルのコピー
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
+# nginx 設定のコピー
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
@@ -173,9 +173,9 @@ EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
 ```
 
-### 4. Nginx Configuration
+### 4. Nginx 設定
 
-Create `nginx/prod.conf`:
+`nginx/prod.conf` を作成：
 
 ```nginx
 events {
@@ -186,7 +186,7 @@ http {
     include /etc/nginx/mime.types;
     default_type application/octet-stream;
 
-    # Logging
+    # ログ設定
     log_format main '$remote_addr - $remote_user [$time_local] "$request" '
                     '$status $body_bytes_sent "$http_referer" '
                     '"$http_user_agent" "$http_x_forwarded_for"';
@@ -194,7 +194,7 @@ http {
     access_log /var/log/nginx/access.log main;
     error_log /var/log/nginx/error.log warn;
 
-    # Basic settings
+    # 基本設定
     sendfile on;
     tcp_nopush on;
     tcp_nodelay on;
@@ -202,7 +202,7 @@ http {
     types_hash_max_size 2048;
     server_tokens off;
 
-    # Gzip compression
+    # Gzip 圧縮
     gzip on;
     gzip_vary on;
     gzip_min_length 10240;
@@ -217,42 +217,42 @@ http {
         application/javascript
         application/json;
 
-    # Rate limiting
+    # レート制限
     limit_req_zone $binary_remote_addr zone=api:10m rate=30r/m;
     limit_req_zone $binary_remote_addr zone=static:10m rate=60r/m;
 
-    # API server
+    # API サーバー
     upstream backend {
         server backend:8080;
         keepalive 32;
     }
 
-    # Frontend server
+    # フロントエンド サーバー
     upstream frontend {
         server frontend:80;
         keepalive 32;
     }
 
-    # Redirect HTTP to HTTPS
+    # HTTP から HTTPS へのリダイレクト
     server {
         listen 80;
         server_name yourdomain.com www.yourdomain.com api.yourdomain.com;
         return 301 https://$server_name$request_uri;
     }
 
-    # Main website (Frontend)
+    # メインウェブサイト（フロントエンド）
     server {
         listen 443 ssl http2;
         server_name yourdomain.com www.yourdomain.com;
 
-        # SSL configuration
+        # SSL 設定
         ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
         ssl_session_timeout 1d;
         ssl_session_cache shared:SSL:50m;
         ssl_session_tickets off;
 
-        # Modern configuration
+        # モダンな設定
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
         ssl_prefer_server_ciphers off;
@@ -260,13 +260,13 @@ http {
         # HSTS
         add_header Strict-Transport-Security "max-age=63072000" always;
 
-        # Security headers
+        # セキュリティ ヘッダー
         add_header X-Content-Type-Options nosniff;
         add_header X-Frame-Options DENY;
         add_header X-XSS-Protection "1; mode=block";
         add_header Referrer-Policy "strict-origin-when-cross-origin";
 
-        # Rate limiting
+        # レート制限
         limit_req zone=static burst=20 nodelay;
 
         location / {
@@ -277,7 +277,7 @@ http {
             proxy_set_header X-Forwarded-Proto $scheme;
         }
 
-        # Health check
+        # ヘルスチェック
         location /health {
             access_log off;
             return 200 "healthy\n";
@@ -285,12 +285,12 @@ http {
         }
     }
 
-    # API server
+    # API サーバー
     server {
         listen 443 ssl http2;
         server_name api.yourdomain.com;
 
-        # SSL configuration (same as above)
+        # SSL 設定（上記と同じ）
         ssl_certificate /etc/letsencrypt/live/yourdomain.com/fullchain.pem;
         ssl_certificate_key /etc/letsencrypt/live/yourdomain.com/privkey.pem;
         ssl_session_timeout 1d;
@@ -300,18 +300,18 @@ http {
         ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384;
         ssl_prefer_server_ciphers off;
 
-        # Security headers
+        # セキュリティ ヘッダー
         add_header Strict-Transport-Security "max-age=63072000" always;
         add_header X-Content-Type-Options nosniff;
         add_header X-Frame-Options DENY;
         add_header X-XSS-Protection "1; mode=block";
 
-        # CORS headers
+        # CORS ヘッダー
         add_header Access-Control-Allow-Origin "https://yourdomain.com" always;
         add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
         add_header Access-Control-Allow-Headers "Content-Type, Authorization" always;
 
-        # Rate limiting for API
+        # API 用レート制限
         limit_req zone=api burst=10 nodelay;
 
         location / {
@@ -321,13 +321,13 @@ http {
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
             proxy_set_header X-Forwarded-Proto $scheme;
 
-            # Timeout settings
+            # タイムアウト設定
             proxy_connect_timeout 30s;
             proxy_send_timeout 30s;
             proxy_read_timeout 30s;
         }
 
-        # Health check
+        # ヘルスチェック
         location /health {
             proxy_pass http://backend/health;
             access_log off;
@@ -336,57 +336,57 @@ http {
 }
 ```
 
-### 5. SSL Certificate Setup
+### 5. SSL 証明書の設定
 
 ```bash
-# Install certificate for your domain
+# ドメイン用証明書のインストール
 sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com -d api.yourdomain.com
 
-# Test automatic renewal
+# 自動更新のテスト
 sudo certbot renew --dry-run
 
-# Add renewal to crontab
+# 更新を crontab に追加
 echo "0 12 * * * /usr/bin/certbot renew --quiet" | sudo crontab -
 ```
 
-### 6. Deploy Application
+### 6. アプリケーションのデプロイ
 
 ```bash
-# Build and start services
+# サービスのビルドと開始
 docker-compose -f docker-compose.prod.yml up --build -d
 
-# Check status
+# ステータスの確認
 docker-compose -f docker-compose.prod.yml ps
 
-# View logs
+# ログの表示
 docker-compose -f docker-compose.prod.yml logs -f
 ```
 
-### 7. Verification
+### 7. 検証
 
 ```bash
-# Test API
+# API のテスト
 curl https://api.yourdomain.com/health
 curl -X POST https://api.yourdomain.com/api/v1/ogp/verify \
   -H "Content-Type: application/json" \
   -d '{"url":"https://github.com"}'
 
-# Test frontend
+# フロントエンドのテスト
 curl -I https://yourdomain.com
 
-# Check SSL
+# SSL の確認
 curl -I https://yourdomain.com 2>&1 | grep -i ssl
 ```
 
-## ☸️ Kubernetes Deployment
+## ☸️ Kubernetes デプロイメント
 
-### Prerequisites
-- Kubernetes cluster (v1.24+)
-- kubectl configured
-- Ingress controller (nginx-ingress)
-- cert-manager for SSL
+### 前提条件
+- Kubernetes クラスター（v1.24+）
+- kubectl が設定済み
+- Ingress コントローラー（nginx-ingress）
+- SSL 用の cert-manager
 
-### 1. Namespace and ConfigMap
+### 1. 名前空間と ConfigMap
 
 ```yaml
 # k8s/namespace.yaml
@@ -409,7 +409,7 @@ data:
   VITE_API_URL: "https://api.yourdomain.com"
 ```
 
-### 2. Backend Deployment
+### 2. バックエンドのデプロイメント
 
 ```yaml
 # k8s/backend-deployment.yaml
@@ -471,7 +471,7 @@ spec:
   type: ClusterIP
 ```
 
-### 3. Frontend Deployment
+### 3. フロントエンドのデプロイメント
 
 ```yaml
 # k8s/frontend-deployment.yaml
@@ -518,7 +518,7 @@ spec:
   type: ClusterIP
 ```
 
-### 4. Ingress Configuration
+### 4. Ingress 設定
 
 ```yaml
 # k8s/ingress.yaml
@@ -561,25 +561,25 @@ spec:
               number: 8080
 ```
 
-### 5. Deploy to Kubernetes
+### 5. Kubernetes へのデプロイ
 
 ```bash
-# Apply all configurations
+# すべての設定を適用
 kubectl apply -f k8s/
 
-# Check deployment status
+# デプロイメント状態の確認
 kubectl get pods -n ogp-service
 kubectl get services -n ogp-service
 kubectl get ingress -n ogp-service
 
-# View logs
+# ログの表示
 kubectl logs -f deployment/ogp-backend -n ogp-service
 kubectl logs -f deployment/ogp-frontend -n ogp-service
 ```
 
-## 🔄 CI/CD Pipeline
+## 🔄 CI/CD パイプライン
 
-### GitHub Actions Workflow
+### GitHub Actions ワークフロー
 
 ```yaml
 # .github/workflows/deploy.yml
@@ -638,9 +638,9 @@ jobs:
         "
 ```
 
-## 📊 Monitoring & Logging
+## 📊 監視とログ記録
 
-### Application Monitoring
+### アプリケーション監視
 
 ```yaml
 # docker-compose.monitoring.yml
@@ -665,43 +665,43 @@ volumes:
   grafana-storage:
 ```
 
-### Log Aggregation
+### ログ集約
 
 ```bash
-# Using journald for system logs
+# システムログに journald を使用
 sudo journalctl -u docker -f
 
-# Using docker logs
+# docker logs を使用
 docker-compose logs -f --tail=100
 
-# Centralized logging with ELK stack
+# ELK スタックによる集中ログ記録
 docker run -d --name elasticsearch \
   -p 9200:9200 -p 9300:9300 \
   -e "discovery.type=single-node" \
   elasticsearch:7.14.0
 ```
 
-## 🔒 Security Hardening
+## 🔒 セキュリティ強化
 
-### Server Security
+### サーバーセキュリティ
 
 ```bash
-# Disable root login
+# root ログインの無効化
 sudo sed -i 's/PermitRootLogin yes/PermitRootLogin no/' /etc/ssh/sshd_config
 
-# Setup fail2ban
+# fail2ban の設定
 sudo apt install -y fail2ban
 sudo systemctl enable fail2ban
 
-# Configure automatic updates
+# 自動更新の設定
 sudo apt install -y unattended-upgrades
 echo 'Unattended-Upgrade::Automatic-Reboot "true";' | sudo tee -a /etc/apt/apt.conf.d/50unattended-upgrades
 ```
 
-### Container Security
+### コンテナーセキュリティ
 
 ```dockerfile
-# Use non-root user in containers
+# コンテナー内で非root ユーザーを使用
 FROM golang:1.21-alpine AS builder
 RUN adduser -D -s /bin/sh appuser
 
@@ -711,10 +711,10 @@ USER appuser
 COPY --from=builder --chown=appuser:appuser /app/ogp-service .
 ```
 
-### Network Security
+### ネットワークセキュリティ
 
 ```bash
-# Configure firewall
+# ファイアウォールの設定
 sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow 22/tcp
@@ -722,113 +722,113 @@ sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
 sudo ufw enable
 
-# Setup VPN access for admin (optional)
+# 管理者用 VPN アクセスの設定（オプション）
 sudo apt install -y wireguard
 ```
 
-## 🚨 Disaster Recovery
+## 🚨 災害復旧
 
-### Backup Strategy
+### バックアップ戦略
 
 ```bash
 #!/bin/bash
-# backup.sh - Daily backup script
+# backup.sh - 日次バックアップ スクリプト
 
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/backup/ogp-service"
 
-# Create backup directory
+# バックアップ ディレクトリの作成
 mkdir -p $BACKUP_DIR
 
-# Backup application configuration
+# アプリケーション設定のバックアップ
 tar -czf $BACKUP_DIR/config-$DATE.tar.gz /opt/ogp-service/
 
-# Backup SSL certificates
+# SSL 証明書のバックアップ
 tar -czf $BACKUP_DIR/ssl-$DATE.tar.gz /etc/letsencrypt/
 
-# Upload to cloud storage (optional)
+# クラウドストレージへのアップロード（オプション）
 # aws s3 cp $BACKUP_DIR/ s3://your-backup-bucket/ --recursive
 
-# Cleanup old backups (keep last 7 days)
+# 古いバックアップのクリーンアップ（最新7日分を保持）
 find $BACKUP_DIR -name "*.tar.gz" -mtime +7 -delete
 ```
 
-### Recovery Procedures
+### 復旧手順
 
 ```bash
-# Restore from backup
-DATE=20250703_120000  # Replace with actual backup date
+# バックアップから復旧
+DATE=20250703_120000  # 実際のバックアップ日付に置き換え
 
-# Stop services
+# サービスの停止
 docker-compose -f docker-compose.prod.yml down
 
-# Restore configuration
+# 設定の復旧
 tar -xzf /backup/ogp-service/config-$DATE.tar.gz -C /
 
-# Restore SSL certificates
+# SSL 証明書の復旧
 tar -xzf /backup/ogp-service/ssl-$DATE.tar.gz -C /
 
-# Restart services
+# サービスの再起動
 docker-compose -f docker-compose.prod.yml up -d
 ```
 
-## 🔍 Troubleshooting
+## 🔍 トラブルシューティング
 
-### Common Deployment Issues
+### 一般的なデプロイメントの問題
 
-#### 1. Container Won't Start
+#### 1. コンテナーが起動しない
 ```bash
-# Check logs
+# ログの確認
 docker-compose logs backend
 docker-compose logs frontend
 
-# Check resource usage
+# リソース使用量の確認
 docker stats
 
-# Rebuild images
+# イメージの再ビルド
 docker-compose build --no-cache
 ```
 
-#### 2. SSL Certificate Issues
+#### 2. SSL 証明書の問題
 ```bash
-# Check certificate status
+# 証明書の状態確認
 sudo certbot certificates
 
-# Renew certificate
+# 証明書の更新
 sudo certbot renew
 
-# Test nginx configuration
+# nginx 設定のテスト
 sudo nginx -t
 ```
 
-#### 3. High Memory Usage
+#### 3. メモリ使用量が高い
 ```bash
-# Check memory usage
+# メモリ使用量の確認
 free -h
 docker stats
 
-# Restart services
+# サービスの再起動
 docker-compose restart
 
-# Add swap if needed
+# 必要に応じてスワップを追加
 sudo fallocate -l 1G /swapfile
 sudo chmod 600 /swapfile
 sudo mkswap /swapfile
 sudo swapon /swapfile
 ```
 
-#### 4. Performance Issues
+#### 4. パフォーマンスの問題
 ```bash
-# Check system load
+# システム負荷の確認
 htop
 iostat -x 1
 
-# Optimize nginx
-# Increase worker_processes in nginx.conf
-# Enable gzip compression
-# Add caching headers
+# nginx の最適化
+# nginx.conf で worker_processes を増やす
+# gzip 圧縮を有効化
+# キャッシュヘッダーを追加
 ```
 
 ---
 
-**Next Steps**: After deployment, refer to [OPERATIONS.md](OPERATIONS.md) for ongoing maintenance and monitoring procedures.
+**次のステップ**: デプロイメント後は、継続的なメンテナンスと監視手順について [OPERATIONS.md](OPERATIONS.md) を参照してください。

@@ -1,26 +1,26 @@
-# OGP Verification Service - Operations Manual
+# OGP 検証サービス - 運用マニュアル
 
-This manual provides comprehensive guidance for operating and maintaining the OGP Verification Service in production.
+このマニュアルでは、OGP 検証サービスを本番環境で運用・保守するための包括的なガイダンスを提供します。
 
-## 📋 Overview
+## 📋 概要
 
-### Service Architecture
-- **Backend**: Go API server (Port 8080)
-- **Frontend**: React SPA served by Nginx
-- **Proxy**: Nginx (SSL termination, load balancing)
-- **Infrastructure**: Sakura VPS + Cloudflare CDN
+### サービス アーキテクチャ
+- **バックエンド**: Go API サーバー（ポート 8080）
+- **フロントエンド**: Nginx で配信される React SPA
+- **プロキシ**: Nginx（SSL 終端、負荷分散）
+- **インフラストラクチャ**: Sakura VPS + Cloudflare CDN
 
-### Key Components
-- API endpoint: `/api/v1/ogp/verify`
-- Health check: `/health`
-- Rate limiting: 10 requests/minute per IP
-- SSL: Let's Encrypt certificates
+### 主要コンポーネント
+- API エンドポイント: `/api/v1/ogp/verify`
+- ヘルスチェック: `/health`
+- レート制限: IP あたり 10 リクエスト/分
+- SSL: Let's Encrypt 証明書
 
-## 🔧 Daily Operations
+## 🔧 日常運用
 
-### Service Health Monitoring
+### サービス ヘルス監視
 
-#### Automated Health Checks
+#### 自動ヘルスチェック
 ```bash
 #!/bin/bash
 # /opt/scripts/health_check.sh
@@ -29,24 +29,24 @@ API_URL="https://api.yourdomain.com"
 FRONTEND_URL="https://yourdomain.com"
 LOG_FILE="/var/log/ogp-service/health.log"
 
-# Create log directory
+# ログディレクトリの作成
 mkdir -p /var/log/ogp-service
 
-# Function to log with timestamp
+# タイムスタンプ付きログ記録関数
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> $LOG_FILE
 }
 
-# Check API health
+# API ヘルスチェック
 if curl -f -s "$API_URL/health" > /dev/null; then
     log "API health check: OK"
 else
     log "API health check: FAILED"
-    # Send alert
+    # アラート送信
     echo "API health check failed" | mail -s "OGP Service Alert" admin@yourdomain.com
 fi
 
-# Check frontend
+# フロントエンドチェック
 if curl -f -s "$FRONTEND_URL" > /dev/null; then
     log "Frontend health check: OK"
 else
@@ -54,7 +54,7 @@ else
     echo "Frontend health check failed" | mail -s "OGP Service Alert" admin@yourdomain.com
 fi
 
-# Check API functionality
+# API 機能チェック
 TEST_RESPONSE=$(curl -s -X POST "$API_URL/api/v1/ogp/verify" \
   -H "Content-Type: application/json" \
   -d '{"url":"https://github.com"}')
@@ -67,47 +67,47 @@ else
 fi
 ```
 
-#### Manual Health Verification
+#### 手動ヘルス検証
 ```bash
-# Quick health check
+# クイック ヘルスチェック
 curl https://api.yourdomain.com/health
 
-# Detailed API test
+# 詳細 API テスト
 curl -X POST https://api.yourdomain.com/api/v1/ogp/verify \
   -H "Content-Type: application/json" \
   -d '{"url":"https://github.com"}' \
   | jq '.validation.is_valid'
 
-# Check response time
+# レスポンス時間の確認
 time curl -s https://api.yourdomain.com/health
 
-# Check SSL certificate
+# SSL 証明書の確認
 openssl s_client -connect api.yourdomain.com:443 -servername api.yourdomain.com < /dev/null 2>/dev/null | openssl x509 -noout -dates
 ```
 
-### Log Management
+### ログ管理
 
-#### Viewing Logs
+#### ログの確認
 ```bash
-# Application logs
+# アプリケーション ログ
 sudo docker-compose -f /opt/ogp-service/docker-compose.prod.yml logs -f
 
-# Nginx access logs
+# Nginx アクセス ログ
 sudo tail -f /var/log/nginx/access.log
 
-# Nginx error logs
+# Nginx エラー ログ
 sudo tail -f /var/log/nginx/error.log
 
-# System logs
+# システム ログ
 sudo journalctl -u docker -f
 
-# SSL certificate renewal logs
+# SSL 証明書更新ログ
 sudo tail -f /var/log/letsencrypt/letsencrypt.log
 ```
 
-#### Log Rotation Configuration
+#### ログローテーション設定
 ```bash
-# Configure logrotate for application logs
+# アプリケーション ログ用 logrotate 設定
 sudo cat > /etc/logrotate.d/ogp-service << EOF
 /var/log/ogp-service/*.log {
     daily
@@ -123,36 +123,36 @@ sudo cat > /etc/logrotate.d/ogp-service << EOF
 }
 EOF
 
-# Test logrotate
+# logrotate のテスト
 sudo logrotate -d /etc/logrotate.d/ogp-service
 ```
 
-## 📊 Performance Monitoring
+## 📊 パフォーマンス監視
 
-### Resource Monitoring
+### リソース監視
 
-#### System Resources
+#### システム リソース
 ```bash
 #!/bin/bash
 # /opt/scripts/system_monitor.sh
 
-# CPU usage
+# CPU 使用率
 CPU_USAGE=$(top -bn1 | grep "Cpu(s)" | awk '{print $2}' | cut -d'%' -f1)
 echo "CPU Usage: ${CPU_USAGE}%"
 
-# Memory usage
+# メモリ使用率
 MEMORY_USAGE=$(free | grep Mem | awk '{printf("%.1f", $3/$2 * 100.0)}')
 echo "Memory Usage: ${MEMORY_USAGE}%"
 
-# Disk usage
+# ディスク使用率
 DISK_USAGE=$(df / | tail -1 | awk '{print $5}' | cut -d'%' -f1)
 echo "Disk Usage: ${DISK_USAGE}%"
 
-# Load average
+# 負荷平均
 LOAD_AVG=$(uptime | awk -F'load average:' '{print $2}')
 echo "Load Average:${LOAD_AVG}"
 
-# Alert if any metric exceeds threshold
+# しきい値を超えた場合のアラート
 if (( $(echo "$CPU_USAGE > 80" | bc -l) )); then
     echo "High CPU usage: ${CPU_USAGE}%" | mail -s "System Alert" admin@yourdomain.com
 fi
@@ -166,30 +166,30 @@ if (( DISK_USAGE > 90 )); then
 fi
 ```
 
-#### Docker Container Monitoring
+#### Docker コンテナー監視
 ```bash
-# Container resource usage
+# コンテナー リソース使用量
 docker stats --no-stream
 
-# Container health status
+# コンテナー ヘルス状態
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml ps
 
-# Detailed container inspection
+# 詳細コンテナー検査
 docker inspect ogp-service_backend_1 | jq '.State.Health'
 ```
 
-#### Application Performance Metrics
+#### アプリケーション パフォーマンス指標
 ```bash
 #!/bin/bash
 # /opt/scripts/performance_monitor.sh
 
 API_URL="https://api.yourdomain.com"
 
-# Measure response time
+# レスポンス時間の測定
 RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "$API_URL/health")
 echo "API Response Time: ${RESPONSE_TIME}s"
 
-# Test rate limiting
+# レート制限のテスト
 echo "Testing rate limiting..."
 for i in {1..15}; do
     STATUS=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/api/v1/ogp/verify" \
@@ -199,117 +199,117 @@ for i in {1..15}; do
     sleep 1
 done
 
-# Alert if response time is too high
+# レスポンス時間が遅い場合のアラート
 if (( $(echo "$RESPONSE_TIME > 5.0" | bc -l) )); then
     echo "Slow API response: ${RESPONSE_TIME}s" | mail -s "Performance Alert" admin@yourdomain.com
 fi
 ```
 
-## 🔄 Maintenance Procedures
+## 🔄 メンテナンス手順
 
-### Regular Maintenance Tasks
+### 定期メンテナンス タスク
 
-#### Weekly Tasks
+#### 週次タスク
 ```bash
 #!/bin/bash
 # /opt/scripts/weekly_maintenance.sh
 
-echo "Starting weekly maintenance..."
+echo "週次メンテナンスを開始しています..."
 
-# Update system packages
+# システム パッケージの更新
 sudo apt update && sudo apt upgrade -y
 
-# Clean up Docker
+# Docker のクリーンアップ
 docker system prune -f
 docker image prune -f
 
-# Rotate logs manually if needed
+# 必要に応じてログの手動ローテーション
 sudo logrotate -f /etc/logrotate.d/ogp-service
 
-# Check SSL certificate expiry
+# SSL 証明書の期限確認
 openssl x509 -in /etc/letsencrypt/live/yourdomain.com/cert.pem -noout -dates
 
-# Backup configuration
+# 設定のバックアップ
 tar -czf /backup/ogp-config-$(date +%Y%m%d).tar.gz /opt/ogp-service/
 
-# Check disk space
+# ディスク容量の確認
 df -h
 
-echo "Weekly maintenance completed."
+echo "週次メンテナンスが完了しました。"
 ```
 
-#### Monthly Tasks
+#### 月次タスク
 ```bash
 #!/bin/bash
 # /opt/scripts/monthly_maintenance.sh
 
-echo "Starting monthly maintenance..."
+echo "月次メンテナンスを開始しています..."
 
-# Full system backup
+# 完全システム バックアップ
 rsync -av /opt/ogp-service/ /backup/monthly/ogp-service-$(date +%Y%m)/
 
-# Security updates
+# セキュリティ更新
 sudo unattended-upgrades
 
-# Review logs for errors
+# エラー ログのレビュー
 grep -i error /var/log/nginx/error.log | tail -20
 sudo docker-compose -f /opt/ogp-service/docker-compose.prod.yml logs --since="30d" | grep -i error
 
-# Performance analysis
-# Generate monthly report
+# パフォーマンス分析
+# 月次レポートの生成
 echo "Monthly Performance Report - $(date)" > /tmp/monthly_report.txt
 echo "==================================" >> /tmp/monthly_report.txt
 echo "" >> /tmp/monthly_report.txt
 
-# Average response time over the month
+# 月間平均レスポンス時間
 grep "health" /var/log/nginx/access.log | awk '{print $NF}' | awk '{sum+=$1; count++} END {print "Average response time: " sum/count "s"}' >> /tmp/monthly_report.txt
 
-# Error rate
+# エラー率
 TOTAL_REQUESTS=$(grep -c "api/v1/ogp/verify" /var/log/nginx/access.log)
 ERROR_REQUESTS=$(grep "api/v1/ogp/verify" /var/log/nginx/access.log | grep -c " 5[0-9][0-9] ")
 ERROR_RATE=$(echo "scale=2; $ERROR_REQUESTS * 100 / $TOTAL_REQUESTS" | bc)
 echo "Error rate: ${ERROR_RATE}%" >> /tmp/monthly_report.txt
 
-# Send report
+# レポート送信
 mail -s "Monthly Performance Report" admin@yourdomain.com < /tmp/monthly_report.txt
 
-echo "Monthly maintenance completed."
+echo "月次メンテナンスが完了しました。"
 ```
 
-### Application Updates
+### アプリケーション更新
 
-#### Backend Update Process
+#### バックエンド更新プロセス
 ```bash
 #!/bin/bash
 # /opt/scripts/update_backend.sh
 
 cd /opt/ogp-service
 
-echo "Starting backend update..."
+echo "バックエンド更新を開始しています..."
 
-# Pull latest code
+# 最新コードの取得
 git pull origin main
 
-# Backup current state
+# 現在の状態をバックアップ
 docker-compose -f docker-compose.prod.yml stop backend
 docker tag ogp-service_backend:latest ogp-service_backend:backup-$(date +%Y%m%d)
 
-# Build new image
+# 新しいイメージのビルド
 docker-compose -f docker-compose.prod.yml build backend
 
-# Start with new image
+# 新しいイメージで開始
 docker-compose -f docker-compose.prod.yml up -d backend
 
-# Wait for health check
+# ヘルスチェックの待機
 sleep 30
 
-# Verify health
+# ヘルスの確認
 if curl -f https://api.yourdomain.com/health; then
-    echo "Backend update successful"
-    # Clean up old backup
+    echo "バックエンド更新が成功しました"
+    # 古いバックアップのクリーンアップ
     docker rmi ogp-service_backend:backup-$(date --date="7 days ago" +%Y%m%d) 2>/dev/null || true
 else
-    echo "Backend update failed, rolling back..."
+    echo "バックエンド更新が失敗しました。ロールバックしています..."
     docker-compose -f docker-compose.prod.yml stop backend
     docker tag ogp-service_backend:backup-$(date +%Y%m%d) ogp-service_backend:latest
     docker-compose -f docker-compose.prod.yml up -d backend
@@ -317,287 +317,287 @@ else
 fi
 ```
 
-#### Frontend Update Process
+#### フロントエンド更新プロセス
 ```bash
 #!/bin/bash
 # /opt/scripts/update_frontend.sh
 
 cd /opt/ogp-service
 
-echo "Starting frontend update..."
+echo "フロントエンド更新を開始しています..."
 
-# Pull latest code
+# 最新コードの取得
 git pull origin main
 
-# Build new frontend
+# 新しいフロントエンドのビルド
 docker-compose -f docker-compose.prod.yml build frontend
 
-# Rolling update
+# ローリング更新
 docker-compose -f docker-compose.prod.yml up -d frontend
 
-echo "Frontend update completed."
+echo "フロントエンド更新が完了しました。"
 ```
 
-## 🚨 Incident Response
+## 🚨 インシデント対応
 
-### Alert Categories
+### アラート カテゴリ
 
-#### Critical Alerts (Immediate Response)
-- API completely down (health check fails)
-- SSL certificate expired
-- Server unresponsive
-- Disk space >95%
+#### クリティカル アラート（即座の対応）
+- API の完全停止（ヘルスチェック失敗）
+- SSL 証明書の期限切れ
+- サーバーが応答しない
+- ディスク容量 >95%
 
-#### Warning Alerts (Response within 1 hour)
-- High response times (>5 seconds)
-- Error rate >10%
-- Memory usage >85%
-- Rate limiting not working
+#### 警告アラート（1時間以内の対応）
+- 高いレスポンス時間（>5秒）
+- エラー率 >10%
+- メモリ使用率 >85%
+- レート制限が機能しない
 
-#### Info Alerts (Response within 24 hours)
-- SSL certificate expiring in 7 days
-- High CPU usage (>80%)
-- Log errors
+#### 情報アラート（24時間以内の対応）
+- SSL 証明書が7日以内に期限切れ
+- 高い CPU 使用率（>80%）
+- ログ エラー
 
-### Incident Response Procedures
+### インシデント対応手順
 
-#### API Down Incident
+#### API 停止インシデント
 ```bash
-# 1. Check service status
+# 1. サービス状態の確認
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml ps
 
-# 2. Check logs for errors
+# 2. エラー ログの確認
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml logs --tail=50
 
-# 3. Restart backend service
+# 3. バックエンド サービスの再起動
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml restart backend
 
-# 4. If restart fails, check system resources
+# 4. 再起動が失敗した場合、システム リソースを確認
 free -h
 df -h
 docker system df
 
-# 5. Emergency restart
+# 5. 緊急再起動
 sudo systemctl restart docker
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml up -d
 
-# 6. Verify recovery
+# 6. 復旧の確認
 curl https://api.yourdomain.com/health
 ```
 
-#### High Error Rate Incident
+#### 高エラー率インシデント
 ```bash
-# 1. Check recent errors in logs
+# 1. ログの最近のエラーを確認
 tail -100 /var/log/nginx/error.log
 
-# 2. Check application errors
+# 2. アプリケーション エラーの確認
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml logs backend --tail=100 | grep -i error
 
-# 3. Analyze traffic patterns
+# 3. トラフィック パターンの分析
 tail -100 /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head -10
 
-# 4. Check for DDoS or abuse
+# 4. DDoS や悪用の確認
 fail2ban-client status nginx-req-limit
 
-# 5. Temporarily increase rate limiting if needed
-# Edit nginx configuration and reload
+# 5. 必要に応じて一時的にレート制限を強化
+# nginx 設定を編集してリロード
 sudo nginx -s reload
 ```
 
-#### SSL Certificate Expiry
+#### SSL 証明書期限切れ
 ```bash
-# 1. Check certificate status
+# 1. 証明書状態の確認
 sudo certbot certificates
 
-# 2. Attempt renewal
+# 2. 更新の試行
 sudo certbot renew --force-renewal
 
-# 3. If renewal fails, check DNS
+# 3. 更新が失敗した場合、DNS を確認
 dig yourdomain.com
 dig api.yourdomain.com
 
-# 4. Manual certificate installation (emergency)
+# 4. 手動証明書インストール（緊急時）
 sudo certbot certonly --manual -d yourdomain.com -d api.yourdomain.com
 
-# 5. Restart nginx
+# 5. nginx の再起動
 sudo systemctl restart nginx
 ```
 
-### Recovery Procedures
+### 復旧手順
 
-#### Database Recovery (if applicable)
+#### データベース復旧（該当する場合）
 ```bash
-# 1. Stop application
+# 1. アプリケーションの停止
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml stop
 
-# 2. Restore from backup
+# 2. バックアップからの復旧
 sudo tar -xzf /backup/database-backup-YYYYMMDD.tar.gz -C /
 
-# 3. Start application
+# 3. アプリケーションの開始
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml up -d
 
-# 4. Verify data integrity
-# Run application-specific checks
+# 4. データ整合性の確認
+# アプリケーション固有のチェックを実行
 ```
 
-#### Full System Recovery
+#### 完全システム復旧
 ```bash
-# 1. Boot from rescue media (if needed)
-# 2. Mount filesystems
-# 3. Restore from backup
+# 1. レスキューメディアからの起動（必要に応じて）
+# 2. ファイルシステムのマウント
+# 3. バックアップからの復旧
 sudo tar -xzf /backup/full-system-backup.tar.gz -C /
 
-# 4. Reinstall Docker if needed
+# 4. 必要に応じて Docker の再インストール
 curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
-# 5. Start services
+# 5. サービスの開始
 cd /opt/ogp-service
 docker-compose -f docker-compose.prod.yml up -d
 
-# 6. Verify all services
+# 6. すべてのサービスの確認
 ./scripts/health_check.sh
 ```
 
-## 📈 Capacity Planning
+## 📈 容量計画
 
-### Traffic Analysis
+### トラフィック分析
 ```bash
 #!/bin/bash
 # /opt/scripts/traffic_analysis.sh
 
-# Daily request count
+# 日次リクエスト数
 TODAY=$(date +%Y-%m-%d)
 REQUESTS_TODAY=$(grep "$TODAY" /var/log/nginx/access.log | grep "api/v1/ogp/verify" | wc -l)
 echo "Requests today: $REQUESTS_TODAY"
 
-# Peak hour analysis
+# ピーク時間分析
 grep "$TODAY" /var/log/nginx/access.log | grep "api/v1/ogp/verify" | awk '{print $4}' | cut -d: -f2 | sort | uniq -c | sort -nr | head -5
 
-# Response time analysis
+# レスポンス時間分析
 grep "$TODAY" /var/log/nginx/access.log | grep "api/v1/ogp/verify" | awk '{print $NF}' | sort -n | awk '{all[NR] = $0} END{print "Min: " all[1] "s, Max: " all[NR] "s, Median: " all[int(NR/2)] "s"}'
 
-# Error rate
+# エラー率
 TOTAL=$(grep "$TODAY" /var/log/nginx/access.log | grep "api/v1/ogp/verify" | wc -l)
 ERRORS=$(grep "$TODAY" /var/log/nginx/access.log | grep "api/v1/ogp/verify" | grep -c " 5[0-9][0-9] ")
 ERROR_RATE=$(echo "scale=2; $ERRORS * 100 / $TOTAL" | bc)
 echo "Error rate: ${ERROR_RATE}%"
 ```
 
-### Scaling Recommendations
+### スケーリング推奨事項
 
-#### Horizontal Scaling Indicators
-- CPU usage consistently >70%
-- Memory usage consistently >80%
-- Response time >3 seconds
-- Request volume >1000/hour
+#### 水平スケーリング指標
+- CPU 使用率が継続的に >70%
+- メモリ使用率が継続的に >80%
+- レスポンス時間 >3秒
+- リクエスト量 >1000/時間
 
-#### Vertical Scaling Steps
+#### 垂直スケーリング手順
 ```bash
-# 1. Monitor current usage for 7 days
-# 2. If upgrade needed, schedule maintenance window
-# 3. Create server snapshot (if supported)
-# 4. Upgrade server plan via Sakura Cloud console
-# 5. Restart services after upgrade
-# 6. Monitor performance for 24 hours
+# 1. 現在の使用状況を7日間監視
+# 2. アップグレードが必要な場合、メンテナンス ウィンドウをスケジュール
+# 3. サーバー スナップショットの作成（サポートされている場合）
+# 4. Sakura Cloud コンソール経由でサーバー プランをアップグレード
+# 5. アップグレード後にサービスを再起動
+# 6. 24時間パフォーマンスを監視
 ```
 
-## 🔒 Security Operations
+## 🔒 セキュリティ運用
 
-### Security Monitoring
+### セキュリティ監視
 ```bash
 #!/bin/bash
 # /opt/scripts/security_monitor.sh
 
-# Check for failed login attempts
+# ログイン失敗試行の確認
 sudo grep "Failed password" /var/log/auth.log | tail -10
 
-# Check fail2ban status
+# fail2ban 状態の確認
 sudo fail2ban-client status
 sudo fail2ban-client status sshd
 
-# Check for unusual traffic patterns
+# 異常なトラフィック パターンの確認
 tail -1000 /var/log/nginx/access.log | awk '{print $1}' | sort | uniq -c | sort -nr | head -20
 
-# Check for known attack patterns
+# 既知の攻撃パターンの確認
 grep -i "union\|select\|drop\|script\|alert" /var/log/nginx/access.log | tail -10
 
-# Check SSL security
+# SSL セキュリティの確認
 nmap --script ssl-enum-ciphers -p 443 yourdomain.com
 ```
 
-### Security Updates
+### セキュリティ更新
 ```bash
 #!/bin/bash
 # /opt/scripts/security_updates.sh
 
-# Check for security updates
+# セキュリティ更新の確認
 sudo apt list --upgradable | grep -i security
 
-# Apply security updates
+# セキュリティ更新の適用
 sudo unattended-upgrades
 
-# Update Docker images
+# Docker イメージの更新
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml pull
 docker-compose -f /opt/ogp-service/docker-compose.prod.yml up -d
 
-# Update fail2ban rules
+# fail2ban ルールの更新
 sudo fail2ban-client reload
 
-# Check for CVEs in running services
-# Use tools like `docker scout cves` if available
+# 実行中サービスの CVE 確認
+# `docker scout cves` などのツールが利用可能な場合は使用
 ```
 
-## 📋 Runbook Checklists
+## 📋 ランブック チェックリスト
 
-### Daily Checklist
-- [ ] Check service health via monitoring
-- [ ] Review error logs
-- [ ] Verify SSL certificate status
-- [ ] Check disk space usage
-- [ ] Review traffic patterns
+### 日次チェックリスト
+- [ ] 監視によるサービス ヘルスの確認
+- [ ] エラー ログの確認
+- [ ] SSL 証明書状態の確認
+- [ ] ディスク容量使用量の確認
+- [ ] トラフィック パターンの確認
 
-### Weekly Checklist
-- [ ] Apply system updates
-- [ ] Clean up Docker images
-- [ ] Review performance metrics
-- [ ] Test backup restoration
-- [ ] Update documentation if needed
+### 週次チェックリスト
+- [ ] システム更新の適用
+- [ ] Docker イメージのクリーンアップ
+- [ ] パフォーマンス指標の確認
+- [ ] バックアップ復旧のテスト
+- [ ] 必要に応じてドキュメントの更新
 
-### Monthly Checklist
-- [ ] Full security scan
-- [ ] Capacity planning review
-- [ ] Update disaster recovery plan
-- [ ] Review and update monitoring thresholds
-- [ ] Performance optimization review
+### 月次チェックリスト
+- [ ] 完全セキュリティ スキャン
+- [ ] 容量計画のレビュー
+- [ ] 災害復旧計画の更新
+- [ ] 監視しきい値の見直しと更新
+- [ ] パフォーマンス最適化のレビュー
 
-## 📞 Contact Information
+## 📞 連絡先情報
 
-### Escalation Matrix
-1. **On-call Engineer**: +81-XXX-XXXX-XXXX
-2. **Technical Lead**: tech-lead@yourdomain.com
-3. **Infrastructure Team**: infra@yourdomain.com
-4. **Emergency Contact**: emergency@yourdomain.com
+### エスカレーション マトリックス
+1. **オンコール エンジニア**: +81-XXX-XXXX-XXXX
+2. **テクニカル リード**: tech-lead@yourdomain.com
+3. **インフラストラクチャ チーム**: infra@yourdomain.com
+4. **緊急連絡先**: emergency@yourdomain.com
 
-### Vendor Contacts
-- **Sakura Cloud Support**: +81-3-5332-7071
-- **Cloudflare Support**: Enterprise dashboard
-- **Domain Registrar**: Contact via web portal
+### ベンダー連絡先
+- **Sakura Cloud サポート**: +81-3-5332-7071
+- **Cloudflare サポート**: Enterprise ダッシュボード
+- **ドメイン レジストラ**: Web ポータル経由で連絡
 
-## 📚 Additional Resources
+## 📚 追加リソース
 
-### Documentation Links
-- [Setup Guide](SETUP.md)
-- [Deployment Guide](DEPLOYMENT.md)
-- [Terraform Setup](TERRAFORM_SETUP.md)
-- [API Documentation](../backend/api/README.md)
+### ドキュメント リンク
+- [セットアップ ガイド](SETUP.md)
+- [デプロイメント ガイド](DEPLOYMENT.md)
+- [Terraform セットアップ](TERRAFORM_SETUP.md)
+- [API ドキュメント](../backend/api/README.md)
 
-### External Resources
-- [Docker Documentation](https://docs.docker.com/)
-- [Nginx Documentation](https://nginx.org/en/docs/)
-- [Let's Encrypt Documentation](https://letsencrypt.org/docs/)
-- [Sakura Cloud Documentation](https://manual.sakura.ad.jp/cloud/)
+### 外部リソース
+- [Docker ドキュメント](https://docs.docker.com/)
+- [Nginx ドキュメント](https://nginx.org/en/docs/)
+- [Let's Encrypt ドキュメント](https://letsencrypt.org/docs/)
+- [Sakura Cloud ドキュメント](https://manual.sakura.ad.jp/cloud/)
 
 ---
 
-**Important**: Keep this operations manual updated with any changes to procedures, contact information, or system architecture.
+**重要**: この運用マニュアルは、手順、連絡先情報、またはシステム アーキテクチャの変更に応じて最新の状態に保ってください。

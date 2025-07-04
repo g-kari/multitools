@@ -1,115 +1,115 @@
-# Terraform Infrastructure Setup Guide
+# Terraform インフラストラクチャ セットアップ ガイド
 
-This guide explains how to deploy the OGP Verification Service to production using Terraform on Sakura VPS and Cloudflare.
+このガイドでは、Sakura VPS と Cloudflare を使用して Terraform で OGP 検証サービスを本番環境にデプロイする方法を説明します。
 
-## 📋 Prerequisites
+## 📋 前提条件
 
-### Required Accounts & Services
-- **Sakura VPS** account with API access
-- **Cloudflare** account with domain management
-- **GitHub** repository for CI/CD
-- **Domain name** managed by Cloudflare
+### 必要なアカウント・サービス
+- **Sakura VPS** アカウント（API アクセス有効）
+- **Cloudflare** アカウント（ドメイン管理機能付き）
+- **GitHub** リポジトリ（CI/CD 用）
+- **ドメイン名**（Cloudflare で管理）
 
-### Required Software
+### 必要なソフトウェア
 - **Terraform** (v1.0+)
-- **Git** for version control
-- **SSH client** for server access
+- **Git**（バージョン管理用）
+- **SSH クライアント**（サーバーアクセス用）
 
-### Required Credentials
-- Sakura Cloud API key and secret
-- Cloudflare API token
-- SSH key pair for server access
+### 必要な認証情報
+- Sakura Cloud API キーとシークレット
+- Cloudflare API トークン
+- サーバーアクセス用 SSH キーペア
 
-## 🚀 Quick Start
+## 🚀 クイックスタート
 
-### 1. Configure Credentials
+### 1. 認証情報の設定
 
 ```bash
-# Sakura Cloud credentials
+# Sakura Cloud の認証情報
 export SAKURACLOUD_ACCESS_TOKEN="your-access-token"
 export SAKURACLOUD_ACCESS_TOKEN_SECRET="your-access-secret"
-export SAKURACLOUD_ZONE="is1b"  # or your preferred zone
+export SAKURACLOUD_ZONE="is1b"  # または好みのゾーン
 
-# Cloudflare credentials
+# Cloudflare の認証情報
 export CLOUDFLARE_API_TOKEN="your-cloudflare-token"
 
-# SSH key for server access
+# サーバーアクセス用 SSH キー
 ssh-keygen -t rsa -b 4096 -f ~/.ssh/ogp-service-key
 ```
 
-### 2. Initialize Terraform
+### 2. Terraform の初期化
 
 ```bash
 cd terraform
 
-# Initialize Terraform
+# Terraform の初期化
 terraform init
 
-# Copy example variables
+# 例となる変数をコピー
 cp terraform.tfvars.example terraform.tfvars
 
-# Edit configuration
+# 設定の編集
 nano terraform.tfvars
 ```
 
-### 3. Configure Variables
+### 3. 変数の設定
 
-Edit `terraform.tfvars`:
+`terraform.tfvars` を編集：
 
 ```hcl
-# Domain and DNS
+# ドメインと DNS
 domain_name = "yourdomain.com"
-subdomain   = "ogp-api"  # Will create ogp-api.yourdomain.com
+subdomain   = "ogp-api"  # ogp-api.yourdomain.com が作成されます
 
-# Server configuration
+# サーバー設定
 server_name = "ogp-service-prod"
-server_plan = "1core-1gb"  # or "2core-2gb" for higher load
+server_plan = "1core-1gb"  # 高負荷時は "2core-2gb"
 
-# SSH access
+# SSH アクセス
 ssh_key_name = "ogp-service-key"
-ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E..."  # Your public key
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2E..."  # あなたの公開鍵
 
-# Application settings
+# アプリケーション設定
 app_environment = "production"
 cors_origins = "https://yourdomain.com"
-rate_limit = "20"  # requests per minute
+rate_limit = "20"  # 1分間あたりのリクエスト数
 
-# Cloudflare settings
+# Cloudflare 設定
 cloudflare_zone_id = "your-zone-id"
 
-# Optional: Database settings (if using external DB)
+# オプション：データベース設定（外部DBを使用する場合）
 # database_host = "your-db-host"
 # database_name = "ogp_service"
 ```
 
-### 4. Plan and Apply
+### 4. 計画と適用
 
 ```bash
-# Review planned changes
+# 計画された変更を確認
 terraform plan
 
-# Apply infrastructure
+# インフラストラクチャを適用
 terraform apply
 
-# Note the outputs
+# 出力を確認
 terraform output
 ```
 
-## 🛠️ Detailed Configuration
+## 🛠️ 詳細設定
 
-### Sakura VPS Configuration
+### Sakura VPS 設定
 
-The Terraform configuration creates:
+Terraform 設定により作成されるもの：
 
-#### Server Specifications
+#### サーバー仕様
 - **OS**: Ubuntu 22.04 LTS
-- **Memory**: 512MB (1core-1gb) or 2GB (2core-2gb)
-- **Storage**: 20GB SSD
-- **Network**: Public IP with firewall rules
+- **メモリ**: 512MB (1core-1gb) または 2GB (2core-2gb)
+- **ストレージ**: 20GB SSD
+- **ネットワーク**: パブリック IP とファイアウォール ルール
 
-#### Security Configuration
+#### セキュリティ設定
 ```hcl
-# Firewall rules
+# ファイアウォール ルール
 resource "sakuracloud_simple_monitor" "ogp_service" {
   target = sakuracloud_server.ogp_service.ip_address
   
@@ -123,26 +123,26 @@ resource "sakuracloud_simple_monitor" "ogp_service" {
 }
 ```
 
-#### Automated Setup Script
-The server runs a cloud-init script that:
-1. Updates system packages
-2. Installs Docker and Docker Compose
-3. Configures firewall (UFW)
-4. Sets up SSL certificates (Let's Encrypt)
-5. Deploys the OGP service
-6. Configures monitoring
+#### 自動セットアップ スクリプト
+サーバーでは以下を実行する cloud-init スクリプトが動作します：
+1. システムパッケージの更新
+2. Docker と Docker Compose のインストール
+3. ファイアウォール (UFW) の設定
+4. SSL 証明書の設定 (Let's Encrypt)
+5. OGP サービスのデプロイ
+6. 監視の設定
 
-### Cloudflare Configuration
+### Cloudflare 設定
 
-#### DNS Records
-- **A Record**: `ogp-api.yourdomain.com` → Server IP
-- **CNAME Record**: `www.ogp-api.yourdomain.com` → `ogp-api.yourdomain.com`
+#### DNS レコード
+- **A レコード**: `ogp-api.yourdomain.com` → サーバー IP
+- **CNAME レコード**: `www.ogp-api.yourdomain.com` → `ogp-api.yourdomain.com`
 
-#### Security Settings
+#### セキュリティ設定
 - **SSL/TLS**: Full (strict)
-- **Security Level**: Medium
-- **Bot Fight Mode**: Enabled
-- **Rate Limiting**: 100 requests/minute per IP
+- **セキュリティ レベル**: Medium
+- **Bot Fight Mode**: 有効
+- **レート制限**: 100 リクエスト/分/IP
 
 ```hcl
 resource "cloudflare_zone_settings_override" "ogp_service" {
@@ -160,124 +160,124 @@ resource "cloudflare_zone_settings_override" "ogp_service" {
 }
 ```
 
-## 🔧 Advanced Configuration
+## 🔧 高度な設定
 
-### Variables Reference
+### 変数リファレンス
 
-#### Required Variables
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `domain_name` | Your domain name | `"example.com"` |
-| `subdomain` | API subdomain | `"ogp-api"` |
-| `ssh_public_key` | SSH public key | `"ssh-rsa AAAAB3..."` |
-| `cloudflare_zone_id` | Cloudflare zone ID | `"abcd1234..."` |
+#### 必須変数
+| 変数 | 説明 | 例 |
+|------|------|-----|
+| `domain_name` | ドメイン名 | `"example.com"` |
+| `subdomain` | API サブドメイン | `"ogp-api"` |
+| `ssh_public_key` | SSH 公開鍵 | `"ssh-rsa AAAAB3..."` |
+| `cloudflare_zone_id` | Cloudflare ゾーン ID | `"abcd1234..."` |
 
-#### Optional Variables
-| Variable | Description | Default | Example |
-|----------|-------------|---------|---------|
-| `server_plan` | Sakura VPS plan | `"1core-1gb"` | `"2core-2gb"` |
-| `server_name` | Server hostname | `"ogp-service"` | `"ogp-prod"` |
-| `app_environment` | Environment name | `"production"` | `"staging"` |
-| `cors_origins` | Allowed CORS origins | `"*"` | `"https://example.com"` |
-| `rate_limit` | Requests per minute | `"10"` | `"20"` |
+#### オプション変数
+| 変数 | 説明 | デフォルト | 例 |
+|------|------|-----------|-----|
+| `server_plan` | Sakura VPS プラン | `"1core-1gb"` | `"2core-2gb"` |
+| `server_name` | サーバー ホスト名 | `"ogp-service"` | `"ogp-prod"` |
+| `app_environment` | 環境名 | `"production"` | `"staging"` |
+| `cors_origins` | 許可する CORS オリジン | `"*"` | `"https://example.com"` |
+| `rate_limit` | 1分間あたりのリクエスト数 | `"10"` | `"20"` |
 
-### Server Plans
+### サーバー プラン
 
-#### 1core-1gb (Recommended for development)
+#### 1core-1gb（開発用推奨）
 - **CPU**: 1 vCPU
-- **Memory**: 1GB
-- **Storage**: 20GB SSD
-- **Cost**: ~¥680/month
+- **メモリ**: 1GB
+- **ストレージ**: 20GB SSD
+- **コスト**: 約 ¥680/月
 
-#### 2core-2gb (Recommended for production)
+#### 2core-2gb（本番用推奨）
 - **CPU**: 2 vCPU
-- **Memory**: 2GB
-- **Storage**: 20GB SSD
-- **Cost**: ~¥1,580/month
+- **メモリ**: 2GB
+- **ストレージ**: 20GB SSD
+- **コスト**: 約 ¥1,580/月
 
-#### 4core-4gb (High load scenarios)
+#### 4core-4gb（高負荷シナリオ）
 - **CPU**: 4 vCPU
-- **Memory**: 4GB
-- **Storage**: 20GB SSD
-- **Cost**: ~¥3,200/month
+- **メモリ**: 4GB
+- **ストレージ**: 20GB SSD
+- **コスト**: 約 ¥3,200/月
 
-### Custom Server Configuration
+### カスタム サーバー設定
 
-Create `terraform/modules/server/user-data.sh` for custom setup:
+カスタム設定用に `terraform/modules/server/user-data.sh` を作成：
 
 ```bash
 #!/bin/bash
 set -e
 
-# Custom application setup
-echo "Setting up OGP Verification Service..."
+# カスタム アプリケーション設定
+echo "OGP 検証サービスをセットアップしています..."
 
-# Install additional packages
+# 追加パッケージのインストール
 apt-get update
 apt-get install -y htop nginx-utils
 
-# Configure custom monitoring
+# カスタム監視の設定
 cat > /opt/ogp-service/monitoring.sh << 'EOF'
 #!/bin/bash
-# Custom monitoring script
+# カスタム監視スクリプト
 curl -f http://localhost:8080/health || systemctl restart ogp-service
 EOF
 
 chmod +x /opt/ogp-service/monitoring.sh
 
-# Add to crontab for health monitoring
+# ヘルス監視のために crontab に追加
 echo "*/5 * * * * /opt/ogp-service/monitoring.sh" | crontab -
 
-echo "Custom setup completed!"
+echo "カスタム設定が完了しました！"
 ```
 
-## 🚀 Deployment Process
+## 🚀 デプロイメント プロセス
 
-### 1. Pre-deployment Checks
+### 1. デプロイメント前チェック
 
 ```bash
-# Validate Terraform configuration
+# Terraform 設定の検証
 terraform validate
 
-# Check formatting
+# フォーマットのチェック
 terraform fmt -check
 
-# Security scan (optional)
+# セキュリティスキャン（オプション）
 terraform plan -out=tfplan
 terraform show -json tfplan | jq > tfplan.json
-# Use tools like tfsec or checkov for security analysis
+# tfsec や checkov などのツールを使用してセキュリティ分析
 ```
 
-### 2. Staging Deployment
+### 2. ステージング デプロイメント
 
 ```bash
-# Create staging workspace
+# ステージング ワークスペースの作成
 terraform workspace new staging
 terraform workspace select staging
 
-# Deploy to staging
+# ステージングへのデプロイ
 terraform apply -var="app_environment=staging" -var="subdomain=ogp-api-staging"
 ```
 
-### 3. Production Deployment
+### 3. 本番デプロイメント
 
 ```bash
-# Switch to production workspace
+# 本番ワークスペースに切り替え
 terraform workspace new production
 terraform workspace select production
 
-# Deploy to production
+# 本番へのデプロイ
 terraform apply
 ```
 
-### 4. Post-deployment Verification
+### 4. デプロイメント後の検証
 
 ```bash
-# Get server information
+# サーバー情報の取得
 terraform output server_ip
 terraform output server_fqdn
 
-# Test deployment
+# デプロイメントのテスト
 FQDN=$(terraform output -raw server_fqdn)
 curl https://${FQDN}/health
 curl -X POST https://${FQDN}/api/v1/ogp/verify \
@@ -285,179 +285,179 @@ curl -X POST https://${FQDN}/api/v1/ogp/verify \
   -d '{"url":"https://github.com"}'
 ```
 
-## 🔒 Security Best Practices
+## 🔒 セキュリティ ベストプラクティス
 
-### SSH Access
+### SSH アクセス
 ```bash
-# Connect to server
+# サーバーへの接続
 SERVER_IP=$(terraform output -raw server_ip)
 ssh -i ~/.ssh/ogp-service-key ubuntu@${SERVER_IP}
 
-# Disable password authentication (done automatically)
-# Configure fail2ban (included in cloud-init)
-# Set up automatic security updates (included)
+# パスワード認証の無効化（自動的に実行）
+# fail2ban の設定（cloud-init に含まれる）
+# 自動セキュリティ更新の設定（含まれる）
 ```
 
-### Firewall Rules
+### ファイアウォール ルール
 ```hcl
-# Only allow necessary ports
+# 必要なポートのみ許可
 resource "sakuracloud_simple_monitor" "ogp_service" {
-  # HTTP (80) - redirects to HTTPS
-  # HTTPS (443) - main service
-  # SSH (22) - admin access only
-  # All other ports blocked by default
+  # HTTP (80) - HTTPS にリダイレクト
+  # HTTPS (443) - メインサービス
+  # SSH (22) - 管理アクセスのみ
+  # その他のポートはデフォルトでブロック
 }
 ```
 
-### SSL/TLS Configuration
-- **Certificate**: Let's Encrypt (auto-renewal)
-- **TLS Version**: 1.2+ only
-- **Ciphers**: Strong ciphers only
-- **HSTS**: Enabled with 1-year max-age
+### SSL/TLS 設定
+- **証明書**: Let's Encrypt（自動更新）
+- **TLS バージョン**: 1.2+ のみ
+- **暗号化**: 強力な暗号のみ
+- **HSTS**: 有効（max-age 1年）
 
-### Monitoring & Alerting
+### 監視とアラート
 ```bash
-# Built-in monitoring checks:
-# - Service health (/health endpoint)
-# - SSL certificate expiry
-# - Disk space usage
-# - Memory usage
-# - Load average
+# 内蔵監視チェック：
+# - サービス ヘルス（/health エンドポイント）
+# - SSL 証明書の期限
+# - ディスク使用量
+# - メモリ使用量
+# - 負荷平均
 ```
 
-## 📊 Monitoring & Maintenance
+## 📊 監視とメンテナンス
 
-### Health Checks
+### ヘルス チェック
 
-Cloudflare monitors the service with:
-- **Endpoint**: `https://ogp-api.yourdomain.com/health`
-- **Frequency**: Every 60 seconds
-- **Timeout**: 10 seconds
-- **Expected Status**: 200 OK
+Cloudflare は以下でサービスを監視します：
+- **エンドポイント**: `https://ogp-api.yourdomain.com/health`
+- **頻度**: 60秒ごと
+- **タイムアウト**: 10秒
+- **期待されるステータス**: 200 OK
 
-### Log Management
+### ログ管理
 
 ```bash
-# SSH into server
+# サーバーにSSH接続
 ssh -i ~/.ssh/ogp-service-key ubuntu@${SERVER_IP}
 
-# View application logs
+# アプリケーション ログの表示
 sudo docker-compose -f /opt/ogp-service/docker-compose.yml logs -f
 
-# View system logs
+# システム ログの表示
 sudo journalctl -fu ogp-service
 
-# View access logs
+# アクセス ログの表示
 sudo tail -f /var/log/nginx/access.log
 ```
 
-### Backup Strategy
+### バックアップ戦略
 
 ```bash
-# Automated daily backups (configured in cloud-init)
-# - Application configuration: /opt/ogp-service/
-# - Docker images and data
-# - System configuration
-# - SSL certificates
+# 自動日次バックアップ（cloud-init で設定）
+# - アプリケーション設定：/opt/ogp-service/
+# - Docker イメージとデータ
+# - システム設定
+# - SSL 証明書
 
-# Manual backup
+# 手動バックアップ
 sudo tar -czf /tmp/ogp-backup-$(date +%Y%m%d).tar.gz \
   /opt/ogp-service/ \
   /etc/letsencrypt/ \
   /etc/nginx/sites-available/
 ```
 
-### Updates & Maintenance
+### 更新とメンテナンス
 
 ```bash
-# SSH into server
+# サーバーにSSH接続
 ssh -i ~/.ssh/ogp-service-key ubuntu@${SERVER_IP}
 
-# Update application (zero-downtime)
+# アプリケーション更新（ゼロダウンタイム）
 cd /opt/ogp-service
 sudo docker-compose pull
 sudo docker-compose up -d
 
-# Update system packages
+# システム パッケージの更新
 sudo apt update && sudo apt upgrade -y
-sudo reboot  # if kernel updates
+sudo reboot  # カーネル更新の場合
 ```
 
-## 🐛 Troubleshooting
+## 🐛 トラブルシューティング
 
-### Common Issues
+### 一般的な問題
 
-#### 1. Terraform Apply Fails
+#### 1. Terraform Apply の失敗
 
 ```bash
-# Check credentials
+# 認証情報の確認
 echo $SAKURACLOUD_ACCESS_TOKEN
 echo $CLOUDFLARE_API_TOKEN
 
-# Verify zone ID
+# ゾーン ID の確認
 curl -X GET "https://api.cloudflare.com/client/v4/zones" \
   -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   -H "Content-Type: application/json"
 
-# Check terraform state
+# terraform 状態の確認
 terraform show
 terraform refresh
 ```
 
-#### 2. Server Not Accessible
+#### 2. サーバーにアクセスできない
 
 ```bash
-# Check server status in Sakura Cloud console
-# Verify security group rules
-# Check cloud-init logs on server:
+# Sakura Cloud コンソールでサーバー状態を確認
+# セキュリティ グループ ルールの確認
+# サーバー上で cloud-init ログを確認：
 ssh ubuntu@${SERVER_IP} sudo cat /var/log/cloud-init-output.log
 ```
 
-#### 3. SSL Certificate Issues
+#### 3. SSL 証明書の問題
 
 ```bash
-# SSH into server and check certificate
+# サーバーにSSH接続して証明書を確認
 ssh ubuntu@${SERVER_IP}
 sudo certbot certificates
 sudo nginx -t
 sudo systemctl status nginx
 ```
 
-#### 4. Service Not Starting
+#### 4. サービスが起動しない
 
 ```bash
-# Check Docker status
+# Docker 状態の確認
 sudo docker ps -a
 sudo docker-compose logs
 
-# Check system resources
+# システム リソースの確認
 free -h
 df -h
 sudo systemctl status ogp-service
 ```
 
-### Debugging Commands
+### デバッグ コマンド
 
 ```bash
-# Terraform debugging
+# Terraform デバッグ
 export TF_LOG=DEBUG
 terraform apply
 
-# Server diagnostics
+# サーバー診断
 curl -I https://ogp-api.yourdomain.com
 dig ogp-api.yourdomain.com
 nslookup ogp-api.yourdomain.com
 
-# Port connectivity
+# ポート接続性
 telnet ogp-api.yourdomain.com 443
 nc -zv ogp-api.yourdomain.com 80 443
 ```
 
-## 🔄 CI/CD Integration
+## 🔄 CI/CD 統合
 
 ### GitHub Actions
 
-Add to `.github/workflows/terraform.yml`:
+`.github/workflows/terraform.yml` に追加：
 
 ```yaml
 name: Terraform Deploy
@@ -497,57 +497,57 @@ jobs:
       working-directory: terraform
 ```
 
-### Required Secrets
+### 必要なシークレット
 
-Add these to GitHub repository secrets:
+これらを GitHub リポジトリのシークレットに追加：
 - `SAKURACLOUD_ACCESS_TOKEN`
 - `SAKURACLOUD_ACCESS_TOKEN_SECRET`
 - `CLOUDFLARE_API_TOKEN`
 
-## 🧹 Cleanup
+## 🧹 クリーンアップ
 
-### Remove Infrastructure
+### インフラストラクチャの削除
 
 ```bash
-# Destroy all resources
+# すべてのリソースを破棄
 terraform destroy
 
-# Confirm deletion
-terraform state list  # Should be empty
+# 削除の確認
+terraform state list  # 空であることを確認
 
-# Clean up local files
+# ローカル ファイルのクリーンアップ
 rm -rf .terraform/
 rm terraform.tfstate*
 ```
 
-### Cost Optimization
+### コスト最適化
 
 ```bash
-# Stop server (retains data, stops billing for compute)
+# サーバー停止（データは保持、コンピューティングの課金停止）
 terraform apply -var="server_power_state=down"
 
-# Reduce server size
+# サーバー サイズの縮小
 terraform apply -var="server_plan=1core-1gb"
 
-# Remove monitoring (optional cost saving)
+# 監視の削除（オプションのコスト削減）
 terraform apply -var="enable_monitoring=false"
 ```
 
-## 📚 Additional Resources
+## 📚 追加リソース
 
-### Terraform Documentation
+### Terraform ドキュメント
 - [Sakura Cloud Provider](https://registry.terraform.io/providers/sacloud/sakuracloud/latest/docs)
 - [Cloudflare Provider](https://registry.terraform.io/providers/cloudflare/cloudflare/latest/docs)
 
-### Sakura Cloud Documentation
-- [API Reference](https://manual.sakura.ad.jp/cloud/api/)
-- [Server Plans](https://cloud.sakura.ad.jp/specification/server-disk/)
+### Sakura Cloud ドキュメント
+- [API リファレンス](https://manual.sakura.ad.jp/cloud/api/)
+- [サーバー プラン](https://cloud.sakura.ad.jp/specification/server-disk/)
 
-### Security Resources
+### セキュリティ リソース
 - [Let's Encrypt](https://letsencrypt.org/)
-- [UFW Documentation](https://help.ubuntu.com/community/UFW)
+- [UFW ドキュメント](https://help.ubuntu.com/community/UFW)
 - [fail2ban](https://www.fail2ban.org/)
 
 ---
 
-**Next Steps**: After infrastructure deployment, see [DEPLOYMENT.md](DEPLOYMENT.md) for application deployment and [OPERATIONS.md](OPERATIONS.md) for ongoing maintenance.
+**次のステップ**: インフラストラクチャのデプロイメント後は、アプリケーションのデプロイメントについて [DEPLOYMENT.md](DEPLOYMENT.md) を、継続的なメンテナンスについて [OPERATIONS.md](OPERATIONS.md) を参照してください。

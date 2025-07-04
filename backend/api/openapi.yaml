@@ -1,0 +1,282 @@
+openapi: 3.0.3
+info:
+  title: OGP Verification Service API
+  description: |
+    A service that analyzes websites for Open Graph Protocol (OGP) metadata 
+    and provides validation results with platform-specific previews for 
+    Twitter/X, Facebook, and Discord.
+  version: 1.0.0
+  contact:
+    name: OGP Verification Service Team
+    url: https://github.com/ushi/multitools
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+  - url: https://api.ogp-verification.example.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      tags:
+        - System
+      summary: Health check endpoint
+      description: Check if the service is running
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "OK"
+
+  /api/v1/ogp/verify:
+    post:
+      tags:
+        - OGP
+      summary: Verify OGP metadata
+      description: |
+        Analyzes a given URL for OGP metadata and returns validation results
+        with platform-specific previews. Rate limited to 10 requests per minute per IP.
+      operationId: verifyOGP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OGPRequest'
+      responses:
+        '200':
+          description: Successful OGP verification
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OGPResponse'
+        '400':
+          description: Bad request (invalid JSON or missing URL)
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "URL is required"
+        '429':
+          description: Rate limit exceeded
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Rate limit exceeded"
+        '500':
+          description: Internal server error
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Error fetching OGP data: <error details>"
+      security:
+        - rateLimiting: []
+
+    options:
+      tags:
+        - OGP
+      summary: CORS preflight request
+      description: Handle CORS preflight requests
+      operationId: verifyOGPOptions
+      responses:
+        '200':
+          description: CORS headers returned
+          headers:
+            Access-Control-Allow-Origin:
+              schema:
+                type: string
+                example: "*"
+            Access-Control-Allow-Methods:
+              schema:
+                type: string
+                example: "POST, OPTIONS"
+            Access-Control-Allow-Headers:
+              schema:
+                type: string
+                example: "Content-Type"
+
+components:
+  schemas:
+    OGPRequest:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          format: uri
+          description: The URL to analyze for OGP metadata
+          example: "https://github.com"
+
+    OGPResponse:
+      type: object
+      properties:
+        url:
+          type: string
+          description: The analyzed URL
+          example: "https://github.com"
+        ogp_data:
+          $ref: '#/components/schemas/OGPData'
+        validation:
+          $ref: '#/components/schemas/ValidationResult'
+        previews:
+          $ref: '#/components/schemas/PlatformPreviews'
+        timestamp:
+          type: string
+          format: date-time
+          description: Response generation timestamp
+          example: "2025-07-03T18:00:00Z"
+
+    OGPData:
+      type: object
+      properties:
+        title:
+          type: string
+          description: The og:title value
+          example: "GitHub · Build and ship software on a single, collaborative platform"
+        description:
+          type: string
+          description: The og:description value
+          example: "Join the world's most widely adopted, AI-powered developer platform..."
+        image:
+          type: string
+          format: uri
+          description: The og:image URL
+          example: "https://github.githubassets.com/assets/home24-5939032587c9.jpg"
+        url:
+          type: string
+          format: uri
+          description: The og:url value
+          example: "https://github.com/"
+        type:
+          type: string
+          description: The og:type value
+          example: "object"
+        site_name:
+          type: string
+          description: The og:site_name value
+          example: "GitHub"
+        image_width:
+          type: string
+          description: The og:image:width value
+        image_height:
+          type: string
+          description: The og:image:height value
+        image_alt:
+          type: string
+          description: The og:image:alt value
+
+    ValidationResult:
+      type: object
+      properties:
+        is_valid:
+          type: boolean
+          description: Overall validation status
+        warnings:
+          type: array
+          items:
+            type: string
+          description: List of validation warnings
+          example: ["Missing og:title tag"]
+        errors:
+          type: array
+          items:
+            type: string
+          description: List of validation errors
+        checks:
+          $ref: '#/components/schemas/ValidationChecks'
+
+    ValidationChecks:
+      type: object
+      properties:
+        has_title:
+          type: boolean
+          description: Whether og:title exists
+        has_description:
+          type: boolean
+          description: Whether og:description exists
+        has_image:
+          type: boolean
+          description: Whether og:image exists
+        image_valid:
+          type: boolean
+          description: Whether the image URL is valid
+        url_valid:
+          type: boolean
+          description: Whether og:url is valid
+
+    PlatformPreviews:
+      type: object
+      properties:
+        twitter:
+          $ref: '#/components/schemas/PlatformPreview'
+        facebook:
+          $ref: '#/components/schemas/PlatformPreview'
+        discord:
+          $ref: '#/components/schemas/PlatformPreview'
+
+    PlatformPreview:
+      type: object
+      properties:
+        platform:
+          type: string
+          enum: [twitter, facebook, discord]
+          description: Platform name
+        title:
+          type: string
+          description: Title as it will appear on the platform
+        description:
+          type: string
+          description: Description as it will appear on the platform
+        image:
+          type: string
+          format: uri
+          description: Image URL
+        is_valid:
+          type: boolean
+          description: Whether the content meets platform requirements
+        warnings:
+          type: array
+          items:
+            type: string
+          description: Platform-specific warnings
+          example: ["Title exceeds Twitter limit (70 characters)"]
+        title_length:
+          type: integer
+          description: Current title character count
+        desc_length:
+          type: integer
+          description: Current description character count
+        max_title_len:
+          type: integer
+          description: Maximum allowed title length for the platform
+        max_desc_len:
+          type: integer
+          description: Maximum allowed description length for the platform
+
+  securitySchemes:
+    rateLimiting:
+      type: apiKey
+      in: header
+      name: X-Client-IP
+      description: Rate limiting based on client IP (10 requests/minute)
+
+tags:
+  - name: OGP
+    description: OGP verification operations
+  - name: System
+    description: System health and status
+
+externalDocs:
+  description: Open Graph Protocol Documentation
+  url: https://ogp.me/

@@ -1,52 +1,52 @@
-# Security Policy
+# セキュリティポリシー
 
-## Supported Versions
+## サポート対象バージョン
 
-We actively support the following versions with security updates:
+以下のバージョンでセキュリティアップデートを積極的にサポートしています：
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| < 1.0   | :x:                |
+| バージョン | サポート状況        |
+| --------- | ------------------ |
+| 1.0.x     | :white_check_mark: |
+| < 1.0     | :x:                |
 
-## Reporting a Vulnerability
+## 脆弱性の報告
 
-We take security vulnerabilities seriously. If you discover a security vulnerability, please follow these steps:
+セキュリティ脆弱性を深刻に受け止めています。セキュリティ脆弱性を発見した場合は、以下の手順に従ってください：
 
-### How to Report
+### 報告方法
 
-1. **Do NOT** create a public GitHub issue for security vulnerabilities
-2. Send an email to the repository owner with details about the vulnerability
-3. Include the following information:
-   - Description of the vulnerability
-   - Steps to reproduce the issue
-   - Potential impact
-   - Suggested fix (if any)
+1. セキュリティ脆弱性について公開の GitHub issue を作成**しないでください**
+2. 脆弱性の詳細についてリポジトリオーナーにメールを送信してください
+3. 以下の情報を含めてください：
+   - 脆弱性の説明
+   - 問題を再現する手順
+   - 潜在的な影響
+   - 修正案（ある場合）
 
-### What to Expect
+### 対応について
 
-- **Acknowledgment**: We will acknowledge receipt of your vulnerability report within 48 hours
-- **Assessment**: We will assess the vulnerability and determine its severity within 5 business days
-- **Updates**: We will provide regular updates on our progress every 5 business days
-- **Resolution**: We aim to resolve critical vulnerabilities within 30 days
+- **受領確認**: 脆弱性レポートの受領を48時間以内に確認します
+- **評価**: 脆弱性を評価し、5営業日以内に深刻度を判定します
+- **進捗報告**: 5営業日ごとに進捗状況を定期的に更新します
+- **解決**: 重要な脆弱性については30日以内の解決を目指します
 
-### Security Best Practices
+### セキュリティベストプラクティス
 
-This project follows security best practices including:
+このプロジェクトは以下のセキュリティベストプラクティスに従っています：
 
-- Regular dependency updates via Dependabot
-- Security scanning in CI/CD pipelines
-- Input validation and sanitization
-- Rate limiting and CORS protection
-- Private IP address blocking
-- Secure Docker configurations
+- Dependabot による定期的な依存関係更新
+- CI/CD パイプラインでのセキュリティスキャン
+- 入力検証とサニタイゼーション
+- レート制限と CORS 保護
+- プライベート IP アドレスのブロック
+- セキュアな Docker 設定
 
-### Responsible Disclosure
+### 責任ある開示
 
-We kindly ask that you:
+以下についてご協力をお願いします：
 
-- Give us reasonable time to fix the vulnerability before public disclosure
-- Avoid accessing, modifying, or deleting data during your research
-- Respect the privacy of our users and the integrity of our systems
+- 公開開示前に脆弱性を修正するための合理的な時間を与えてください
+- 研究中にデータへのアクセス、変更、削除を避けてください
+- ユーザーのプライバシーとシステムの整合性を尊重してください
 
-Thank you for helping keep our project secure!
+プロジェクトのセキュリティ確保にご協力いただき、ありがとうございます！

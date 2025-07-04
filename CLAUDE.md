@@ -1,255 +1,256 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+このファイルは、Claude Code (claude.ai/code) がこのリポジトリでコードを操作する際のガイダンスを提供します。
 
-## Project Overview
+## プロジェクト概要
 
-This is an **OGP (Open Graph Protocol) Verification Service** project that analyzes websites for OGP metadata and provides validation results with platform-specific previews for Twitter/X, Facebook, and Discord.
+これは **OGP (Open Graph Protocol) 検証サービス** プロジェクトです。ウェブサイトの OGP メタデータを分析し、Twitter/X、Facebook、Discord 向けのプラットフォーム固有のプレビューと検証結果を提供します。
 
-## Technology Stack
+## 技術スタック
 
-### Backend
-- **Language**: Go (Golang)
-- **Framework**: Standard Go HTTP server with JSON API
-- **Deployment**: Sakura VPS (512MB) with Ubuntu 22.04 LTS
+### バックエンド
+- **言語**: Go (Golang)
+- **フレームワーク**: JSON API 付き標準 Go HTTP サーバー
+- **デプロイ**: Sakura VPS (512MB) with Ubuntu 22.04 LTS
 
-### Frontend
-- **Framework**: React with TypeScript
-- **Runtime**: Bun (package manager and build tool)
-- **Styling**: Tailwind CSS (recommended)
-- **Deployment**: Cloudflare Pages
+### フロントエンド
+- **フレームワーク**: React with TypeScript
+- **ランタイム**: Bun (パッケージマネージャー兼ビルドツール)
+- **スタイリング**: Tailwind CSS (推奨)
+- **デプロイ**: Cloudflare Pages
 
-### Infrastructure
+### インフラストラクチャ
 - **IaC**: Terraform
 - **CI/CD**: GitHub Actions
-- **Monitoring**: Cloudflare Analytics + custom health checks
+- **監視**: Cloudflare Analytics + カスタムヘルスチェック
 
-## Development Commands
+## 開発コマンド
 
-### Backend (Go)
+### バックエンド (Go)
 ```bash
-# Initialize Go module
+# Go モジュールを初期化
 go mod init ogp-verification-service
 
-# Run development server
+# 開発サーバーを実行
 go run main.go
 
-# Build for production
+# 本番用にビルド
 go build -o ogp-service
 
-# Run tests
+# テストを実行
 go test ./...
 
-# Run tests with coverage
+# カバレッジ付きでテストを実行
 go test -cover ./...
 ```
 
-### Frontend (React + Bun)
+### フロントエンド (React + Bun)
 ```bash
-# Initialize Bun project
+# Bun プロジェクトを初期化
 bun create react-app frontend --template typescript
 
-# Install dependencies
+# 依存関係をインストール
 bun install
 
-# Development server
+# 開発サーバー
 bun dev
 
-# Build for production
+# 本番用にビルド
 bun run build
 
-# Run tests
+# テストを実行
 bun test
 
-# Type checking
+# 型チェック
 bun run type-check
 ```
 
-### Infrastructure (Terraform)
+### インフラストラクチャ (Terraform)
 ```bash
-# Initialize Terraform
+# Terraform を初期化
 terraform init
 
-# Plan infrastructure changes
+# インフラ変更を計画
 terraform plan
 
-# Apply infrastructure changes
+# インフラ変更を適用
 terraform apply
 
-# Destroy infrastructure
+# インフラを削除
 terraform destroy
 ```
 
-### Docker Development
+### Docker 開発
 ```bash
-# Start development environment
+# 開発環境を起動
 docker-compose up -d
 
-# Build and start services
+# サービスをビルドして起動
 docker-compose up --build
 
-# Stop services
+# サービスを停止
 docker-compose down
 ```
 
-## Project Structure
+## プロジェクト構造
 
 ```
-├── backend/              # Go backend application
-│   ├── cmd/             # Application entrypoints
-│   ├── internal/        # Private application code
-│   │   ├── handlers/    # HTTP handlers
-│   │   ├── models/      # Data models
-│   │   ├── services/    # Business logic
-│   │   └── validators/  # Input validation
-│   ├── pkg/            # Public library code
-│   └── go.mod          # Go module definition
-├── frontend/            # React + Bun frontend
+├── backend/              # Go バックエンドアプリケーション
+│   ├── cmd/             # アプリケーションエントリーポイント
+│   ├── internal/        # プライベートアプリケーションコード
+│   │   ├── handlers/    # HTTP ハンドラー
+│   │   ├── models/      # データモデル
+│   │   ├── services/    # ビジネスロジック
+│   │   └── validators/  # 入力検証
+│   ├── pkg/            # パブリックライブラリコード
+│   └── go.mod          # Go モジュール定義
+├── frontend/            # React + Bun フロントエンド
 │   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── hooks/       # Custom React hooks
-│   │   ├── services/    # API services
-│   │   └── types/       # TypeScript types
+│   │   ├── components/  # React コンポーネント
+│   │   ├── hooks/       # カスタム React フック
+│   │   ├── services/    # API サービス
+│   │   └── types/       # TypeScript 型定義
 │   ├── package.json
 │   └── bun.lockb
 ├── terraform/           # Infrastructure as Code
 │   ├── main.tf
 │   ├── variables.tf
 │   └── outputs.tf
-├── docker-compose.yml   # Local development environment
+├── docker-compose.yml   # ローカル開発環境
 └── .github/workflows/   # GitHub Actions CI/CD
 ```
 
-## API Specification
+## API 仕様
 
-### Main Endpoint
+### メインエンドポイント
 - **POST** `/api/v1/ogp/verify`
-- **Request**: `{"url": "https://example.com"}`
-- **Response**: JSON with OGP data, validation results, and platform previews
+- **リクエスト**: `{"url": "https://example.com"}`
+- **レスポンス**: OGP データ、検証結果、プラットフォームプレビューを含む JSON
 
-### Platform Support
-- **Twitter/X**: Title (70 chars), Description (200 chars), Image (1200x630px)
-- **Facebook**: Title (100 chars), Description (300 chars), Image (1200x630px)
-- **Discord**: Title (256 chars), Description (2048 chars), Image (flexible)
+### プラットフォームサポート
+- **Twitter/X**: タイトル (70文字)、説明 (200文字)、画像 (1200x630px)
+- **Facebook**: タイトル (100文字)、説明 (300文字)、画像 (1200x630px)
+- **Discord**: タイトル (256文字)、説明 (2048文字)、画像 (柔軟)
 
-## Security Requirements
+## セキュリティ要件
 
-- CORS configuration for frontend domain
-- Rate limiting: 10 requests/minute per IP
-- Private IP address blocking
-- Input validation and sanitization
-- No sensitive data in logs or responses
+- フロントエンドドメイン用の CORS 設定
+- レート制限: IP あたり 10 リクエスト/分
+- プライベート IP アドレスのブロック
+- 入力検証とサニタイゼーション
+- ログやレスポンスに機密データを含めない
 
-## Performance Requirements
+## パフォーマンス要件
 
-- Response time: < 3 seconds
-- Concurrent requests: 100 req/sec
-- Request timeout: 10 seconds
-- Test coverage: 80%+
+- レスポンス時間: < 3 秒
+- 同時リクエスト: 100 req/sec
+- リクエストタイムアウト: 10 秒
+- テストカバレッジ: 80%+
 
-## Development Workflow
+## 開発ワークフロー
 
-1. **Task Management with TODO.md**: ALL work status, content, and progress MUST be managed in TODO.md
-   - Update TODO.md before starting any task
-   - Mark tasks as in-progress when beginning work
-   - Mark tasks as completed when finished
-   - Add new tasks as they are discovered
-   - Document any blockers or issues in TODO.md
-   - Use TODO.md as the single source of truth for project status
+1. **TODO.md でのタスク管理**: すべての作業状況、コンテンツ、進捗は TODO.md で管理する必要があります
+   - **必須**: 作業を開始する前に必ず TODO.md を更新
+   - **必須**: 作業開始時にタスクを進行中としてマーク
+   - **必須**: 完了時にタスクを完了としてマーク
+   - **必須**: 発見された新しいタスクを追加
+   - **必須**: TODO.md でブロッカーや問題を文書化
+   - **必須**: TODO.md をプロジェクトの状況の信頼できる情報源として使用
+   - **絶対必要**: どんな小さな作業でも TODO.md に記載せずに作業することは禁止
 
-2. **Always commit completed work**: When finishing any task or making significant progress, commit changes with descriptive messages
-3. **Use feature branches**: Create branches for new features or major changes
-4. **Write tests**: Implement unit tests for new functionality
-5. **Document changes**: Update relevant documentation when making changes
-6. **Test before deployment**: Run all tests and type checks before pushing
+2. **完了した作業を常にコミット**: タスクの完了や大幅な進捗時に、説明的なメッセージでコミット
+3. **機能ブランチを使用**: 新機能や大きな変更には専用ブランチを作成
+4. **テストを書く**: 新機能には単体テストを実装
+5. **変更を文書化**: 変更時は関連ドキュメントを更新
+6. **デプロイ前にテスト**: プッシュ前にすべてのテストと型チェックを実行
 
-## Commit Guidelines
+## コミットガイドライン
 
-- Use conventional commit messages
-- Always commit when completing tasks
-- Include 🤖 emoji for AI-generated commits
-- Example: `feat: implement OGP validation service 🤖`
+- 慣例的なコミットメッセージを使用
+- タスク完了時に常にコミット
+- AI 生成コミットには 🤖 絵文字を含める
+- 例: `feat: implement OGP validation service 🤖`
 
-## Environment Variables
+## 環境変数
 
-### Backend
-- `PORT`: Server port (default: 8080)
-- `CORS_ORIGINS`: Allowed CORS origins
-- `RATE_LIMIT`: Requests per minute per IP
+### バックエンド
+- `PORT`: サーバーポート (デフォルト: 8080)
+- `CORS_ORIGINS`: 許可された CORS オリジン
+- `RATE_LIMIT`: IP あたりの分間リクエスト数
 
-### Frontend
-- `REACT_APP_API_URL`: Backend API URL
-- `REACT_APP_ENV`: Environment (development/production)
+### フロントエンド
+- `REACT_APP_API_URL`: バックエンド API URL
+- `REACT_APP_ENV`: 環境 (development/production)
 
-## Testing
+## テスト
 
-### Backend Testing
+### バックエンドテスト
 ```bash
-# Run all tests
+# すべてのテストを実行
 go test ./...
 
-# Run with coverage
+# カバレッジ付きで実行
 go test -cover ./...
 
-# Run specific test
+# 特定のテストを実行
 go test ./internal/handlers -v
 ```
 
-### Frontend Testing
+### フロントエンドテスト
 ```bash
-# Run all tests
+# すべてのテストを実行
 bun test
 
-# Run in watch mode
+# ウォッチモードで実行
 bun test --watch
 
-# Run with coverage
+# カバレッジ付きで実行
 bun test --coverage
 ```
 
-## Deployment
+## デプロイ
 
-### Production Deployment
-1. Backend: Build Go binary and deploy to Sakura VPS
-2. Frontend: Push to GitHub (auto-deploys to Cloudflare Pages)
-3. Infrastructure: Apply Terraform changes
+### 本番デプロイ
+1. バックエンド: Go バイナリをビルドして Sakura VPS にデプロイ
+2. フロントエンド: GitHub にプッシュ (Cloudflare Pages に自動デプロイ)
+3. インフラストラクチャ: Terraform 変更を適用
 
-### Development Environment
-Use Docker Compose for local development with hot reload enabled.
+### 開発環境
+ホットリロードを有効にしたローカル開発には Docker Compose を使用。
 
-### Testing and Verification
-- **Docker-only testing**: ALL service testing, verification, and development work MUST use Docker
-- **No local installation**: Do NOT install Go, Bun, or other runtime dependencies directly on the host system
-- **Containerized verification**: Use `docker-compose up -d` for all service validation and testing
-- **Clean environment**: This approach prevents local environment contamination and ensures consistency
+### テストと検証
+- **Docker 専用テスト**: すべてのサービステスト、検証、開発作業は Docker を使用する必要があります
+- **ローカルインストール禁止**: Go、Bun、その他のランタイム依存関係をホストシステムに直接インストールしないでください
+- **コンテナ化された検証**: すべてのサービス検証とテストに `docker-compose up -d` を使用
+- **クリーンな環境**: このアプローチによりローカル環境の汚染を防止し、一貫性を保証
 
-## Monitoring
+## 監視
 
-- **Health Check**: `/health` endpoint
-- **Metrics**: Response times, error rates, request counts
-- **Logs**: Structured JSON logging
-- **Alerts**: Configure for high error rates or downtime
+- **ヘルスチェック**: `/health` エンドポイント
+- **メトリクス**: レスポンス時間、エラー率、リクエスト数
+- **ログ**: 構造化 JSON ログ
+- **アラート**: 高エラー率やダウンタイムに対する設定
 
-## Development Restrictions
+## 開発制限
 
-### Prohibited Actions
-- **DO NOT create mock servers**: This project uses real Go and React implementations only
-- **DO NOT create Python/Flask alternatives**: Use the existing Go backend service
-- **DO NOT bypass the official technology stack**: Stick to Go + React + TypeScript
+### 禁止される行為
+- **モックサーバーを作成しない**: このプロジェクトは実際の Go と React 実装のみを使用
+- **Python/Flask 代替を作成しない**: 既存の Go バックエンドサービスを使用
+- **公式技術スタックを迂回しない**: Go + React + TypeScript を使用
 
-### Required Approach
-- **Use official implementations**: Always work with the actual Go backend and React frontend
-- **Test with real services**: Use the production-ready code for testing and development
-- **Maintain technology consistency**: Follow the established Go + React + Bun + Terraform stack
-- **Mandatory TODO.md updates**: ALL work must be tracked and updated in TODO.md in real-time
-- **Docker-first testing**: ALL service testing and verification MUST use Docker to avoid local environment contamination
+### 必要なアプローチ
+- **公式実装を使用**: 実際の Go バックエンドと React フロントエンドで常に作業
+- **実際のサービスでテスト**: テストと開発には本番対応コードを使用
+- **技術の一貫性を保持**: 確立された Go + React + Bun + Terraform スタックに従う
+- **必須の TODO.md 更新**: すべての作業は TODO.md でリアルタイムに追跡・更新する必要があります
+- **Docker ファーストテスト**: すべてのサービステストと検証は Docker を使用してローカル環境の汚染を回避する必要があります
 
-## Architecture Notes
+## アーキテクチャ注記
 
-This is a distributed system with:
-- **Stateless backend** for horizontal scaling
-- **Static frontend** for CDN delivery
-- **Terraform IaC** for reproducible infrastructure
-- **GitHub Actions** for automated CI/CD
+これは以下の特徴を持つ分散システムです：
+- **ステートレスバックエンド**: 水平スケーリング対応
+- **静的フロントエンド**: CDN 配信用
+- **Terraform IaC**: 再現可能なインフラストラクチャ
+- **GitHub Actions**: 自動化された CI/CD
 
-The service focuses on OGP validation and preview generation for social media platforms, with emphasis on performance, security, and reliability.
+このサービスは、パフォーマンス、セキュリティ、信頼性を重視し、ソーシャルメディアプラットフォーム向けの OGP 検証とプレビュー生成に焦点を当てています。

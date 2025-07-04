@@ -1,160 +1,160 @@
-# E2E Tests for OGP Verification Service
+# OGP 検証サービスの E2E テスト
 
-This directory contains end-to-end tests for the OGP Verification Service API.
+このディレクトリには、OGP 検証サービス API のエンドツーエンドテストが含まれています。
 
-## Overview
+## 概要
 
-The E2E tests verify the complete functionality of the service by making real HTTP requests to a running instance of the API and validating the responses.
+E2E テストは、実行中の API インスタンスに対して実際の HTTP リクエストを行い、レスポンスを検証することで、サービスの完全な機能性を確認します。
 
-## Test Coverage
+## テスト対象
 
-### Core Functionality
-- ✅ Health endpoint verification
-- ✅ OGP verification with complete data (GitHub)
-- ✅ OGP verification with good data (Wikipedia)
-- ✅ OGP verification with minimal data (Example.com)
+### コア機能
+- ✅ ヘルスエンドポイントの検証
+- ✅ 完全なデータでの OGP 検証（GitHub）
+- ✅ 良好なデータでの OGP 検証（Wikipedia）
+- ✅ 最小限のデータでの OGP 検証（Example.com）
 
-### Error Handling
-- ✅ Empty URL validation
-- ✅ Invalid JSON handling
-- ✅ Private IP blocking
+### エラーハンドリング
+- ✅ 空の URL の検証
+- ✅ 無効な JSON の処理
+- ✅ プライベート IP のブロック
 
-### Security & Performance
-- ✅ Rate limiting (10 requests/minute per IP)
-- ✅ CORS headers validation
-- ✅ Method not allowed responses
-- ✅ API latency testing (< 10 seconds)
-- ✅ Concurrent request handling
+### セキュリティとパフォーマンス
+- ✅ レート制限（IP あたり 10 リクエスト/分）
+- ✅ CORS ヘッダーの検証
+- ✅ 許可されていないメソッドのレスポンス
+- ✅ API レイテンシーテスト（< 10 秒）
+- ✅ 同時リクエストの処理
 
-## Running the Tests
+## テストの実行
 
-### Prerequisites
-- Docker and Docker Compose
-- Network access to test websites (GitHub, Wikipedia, Example.com)
+### 前提条件
+- Docker と Docker Compose
+- テスト用ウェブサイトへのネットワークアクセス（GitHub、Wikipedia、Example.com）
 
-### Run All E2E Tests
+### すべての E2E テストを実行
 
 ```bash
 cd backend/tests/e2e
 ./run-e2e.sh
 ```
 
-### Manual Testing
+### 手動テスト
 
-1. Start the test environment:
+1. テスト環境を起動：
 ```bash
 docker-compose -f docker-compose.e2e.yml up --build
 ```
 
-2. Run specific tests:
+2. 特定のテストを実行：
 ```bash
 docker-compose -f docker-compose.e2e.yml exec e2e-tests go test -v -run TestHealthEndpoint
 ```
 
-3. Cleanup:
+3. クリーンアップ：
 ```bash
 docker-compose -f docker-compose.e2e.yml down --volumes --remove-orphans
 ```
 
-## Test Structure
+## テスト構造
 
-### Test Files
-- `main_test.go` - Core E2E test implementation
-- `docker-compose.e2e.yml` - Test environment configuration
-- `Dockerfile.e2e` - Test runner container
-- `run-e2e.sh` - Test execution script
+### テストファイル
+- `main_test.go` - コア E2E テスト実装
+- `docker-compose.e2e.yml` - テスト環境設定
+- `Dockerfile.e2e` - テストランナーコンテナ
+- `run-e2e.sh` - テスト実行スクリプト
 
-### Test Environment
-- **Backend Service**: Runs on port 8080 with health checks
-- **Test Runner**: Go test environment with curl and jq tools
-- **Network**: Isolated Docker network for testing
+### テスト環境
+- **バックエンドサービス**: ポート 8080 でヘルスチェック付きで実行
+- **テストランナー**: curl と jq ツールを含む Go テスト環境
+- **ネットワーク**: テスト用の分離された Docker ネットワーク
 
-## Test Scenarios
+## テストシナリオ
 
-### 1. Health Check (`TestHealthEndpoint`)
-Verifies the `/health` endpoint returns 200 OK.
+### 1. ヘルスチェック（`TestHealthEndpoint`）
+`/health` エンドポイントが 200 OK を返すことを確認します。
 
-### 2. GitHub OGP Test (`TestOGPVerifyEndpoint_GitHub`)
-Tests with a website that has complete OGP metadata:
-- Validates all required OGP fields are present
-- Checks platform-specific previews
-- Verifies validation results
+### 2. GitHub OGP テスト（`TestOGPVerifyEndpoint_GitHub`）
+完全な OGP メタデータを持つウェブサイトでテスト：
+- 必要なすべての OGP フィールドが存在することを検証
+- プラットフォーム固有のプレビューをチェック
+- 検証結果を確認
 
-### 3. Wikipedia OGP Test (`TestOGPVerifyEndpoint_Wikipedia`)
-Tests with a website that has good OGP metadata:
-- Validates title and description presence
-- Checks validation flags
+### 3. Wikipedia OGP テスト（`TestOGPVerifyEndpoint_Wikipedia`）
+良好な OGP メタデータを持つウェブサイトでテスト：
+- タイトルと説明の存在を検証
+- 検証フラグをチェック
 
-### 4. Example.com Test (`TestOGPVerifyEndpoint_ExampleCom`)
-Tests with a minimal OGP implementation:
-- Expects warnings but still valid response
-- Validates error handling for missing data
+### 4. Example.com テスト（`TestOGPVerifyEndpoint_ExampleCom`）
+最小限の OGP 実装でテスト：
+- 警告は出るが有効なレスポンスを期待
+- 欠落データのエラーハンドリングを検証
 
-### 5. Error Cases (`TestOGPVerifyEndpoint_ErrorCases`)
-Tests various error conditions:
-- Empty URL (400 Bad Request)
-- Invalid JSON (400 Bad Request)
-- Private IP (500 Internal Server Error)
+### 5. エラーケース（`TestOGPVerifyEndpoint_ErrorCases`）
+様々なエラー条件をテスト：
+- 空の URL（400 Bad Request）
+- 無効な JSON（400 Bad Request）
+- プライベート IP（500 Internal Server Error）
 
-### 6. Rate Limiting (`TestRateLimiting`)
-Validates the 10 requests/minute rate limit:
-- Makes 10 successful requests
-- Verifies 11th request returns 429
+### 6. レート制限（`TestRateLimiting`）
+10 リクエスト/分のレート制限を検証：
+- 10 回の成功リクエストを実行
+- 11 回目のリクエストが 429 を返すことを確認
 
-### 7. CORS Headers (`TestCORSHeaders`)
-Validates CORS preflight handling:
-- Tests OPTIONS method
-- Checks required CORS headers
+### 7. CORS ヘッダー（`TestCORSHeaders`）
+CORS プリフライトの処理を検証：
+- OPTIONS メソッドをテスト
+- 必要な CORS ヘッダーをチェック
 
-### 8. Method Validation (`TestMethodNotAllowed`)
-Tests unsupported HTTP methods return 405.
+### 8. メソッド検証（`TestMethodNotAllowed`）
+サポートされていない HTTP メソッドが 405 を返すことをテスト。
 
-### 9. Performance (`TestAPILatency`)
-Validates API response time < 10 seconds.
+### 9. パフォーマンス（`TestAPILatency`）
+API レスポンス時間が 10 秒未満であることを検証。
 
-### 10. Concurrency (`TestConcurrentRequests`)
-Tests handling of multiple simultaneous requests.
+### 10. 同時実行（`TestConcurrentRequests`）
+複数の同時リクエストの処理をテスト。
 
-## Expected Results
+## 期待される結果
 
-All tests should pass with:
-- ✅ 10/10 tests passing
-- No test failures or errors
-- Performance within acceptable limits
-- Proper error handling
+すべてのテストが以下の条件で成功するはずです：
+- ✅ 10/10 テストが成功
+- テストの失敗やエラーがない
+- 許容範囲内のパフォーマンス
+- 適切なエラーハンドリング
 
-## Troubleshooting
+## トラブルシューティング
 
-### Common Issues
+### よくある問題
 
-1. **Network connectivity issues**
-   - Ensure Docker has internet access
-   - Check if test websites are accessible
+1. **ネットワーク接続の問題**
+   - Docker がインターネットにアクセスできることを確認
+   - テスト用ウェブサイトにアクセスできるかチェック
 
-2. **Rate limiting during development**
-   - Wait 1 minute between test runs
-   - Or restart the backend service
+2. **開発中のレート制限**
+   - テスト実行間隔を 1 分空ける
+   - またはバックエンドサービスを再起動
 
-3. **Health check failures**
-   - Increase health check timeout in docker-compose.e2e.yml
-   - Check backend logs for startup issues
+3. **ヘルスチェックの失敗**
+   - docker-compose.e2e.yml でヘルスチェックタイムアウトを増加
+   - バックエンドログで起動問題をチェック
 
-### Debug Commands
+### デバッグコマンド
 
 ```bash
-# View backend logs
+# バックエンドログを表示
 docker-compose -f docker-compose.e2e.yml logs backend-e2e
 
-# View test logs
+# テストログを表示
 docker-compose -f docker-compose.e2e.yml logs e2e-tests
 
-# Test specific endpoint manually
+# 特定のエンドポイントを手動でテスト
 docker-compose -f docker-compose.e2e.yml exec e2e-tests curl -X POST http://backend-e2e:8080/api/v1/ogp/verify -H "Content-Type: application/json" -d '{"url":"https://github.com"}'
 ```
 
-## Integration with CI/CD
+## CI/CD との統合
 
-These E2E tests can be integrated into GitHub Actions or other CI/CD pipelines:
+これらの E2E テストは GitHub Actions やその他の CI/CD パイプラインに統合できます：
 
 ```yaml
 - name: Run E2E Tests

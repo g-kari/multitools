@@ -1,61 +1,61 @@
-# OGP Verification Service - Setup Guide
+# OGP 検証サービス - セットアップガイド
 
-This guide will help you set up and run the OGP Verification Service locally for development or production use.
+このガイドは、開発または本番利用のために OGP 検証サービスをローカルでセットアップして実行する方法を説明します。
 
-## 📋 Prerequisites
+## 📋 前提条件
 
-### Required Software
-- **Docker** (v20.0+) and **Docker Compose** (v2.0+)
-- **Git** for cloning the repository
+### 必要なソフトウェア
+- **Docker** (v20.0+) と **Docker Compose** (v2.0+)
+- リポジトリをクローンするための **Git**
 
-### Optional (for native development)
-- **Go** (v1.21+) for backend development
-- **Node.js** (v18+) and **npm** for frontend development
-- **Terraform** (v1.0+) for infrastructure deployment
+### オプション（ネイティブ開発用）
+- バックエンド開発用の **Go** (v1.21+)
+- フロントエンド開発用の **Node.js** (v18+) と **npm**
+- インフラデプロイ用の **Terraform** (v1.0+)
 
-### System Requirements
-- **Memory**: 2GB RAM minimum, 4GB recommended
-- **Storage**: 1GB free space
-- **Network**: Internet connection for fetching OGP data
+### システム要件
+- **メモリ**: 最小 2GB RAM、推奨 4GB
+- **ストレージ**: 1GB の空き容量
+- **ネットワーク**: OGP データ取得のためのインターネット接続
 
-## 🚀 Quick Start (Docker)
+## 🚀 クイックスタート (Docker)
 
-### 1. Clone the Repository
+### 1. リポジトリをクローン
 
 ```bash
 git clone <repository-url>
 cd ogp-verification-service
 ```
 
-### 2. Start Services with Docker Compose
+### 2. Docker Compose でサービスを開始
 
 ```bash
-# Start backend and frontend services
+# バックエンドとフロントエンドサービスを開始
 docker-compose up -d
 
-# Check service status
+# サービス状況を確認
 docker-compose ps
 
-# View logs
+# ログを表示
 docker-compose logs -f
 ```
 
-### 3. Verify Installation
+### 3. インストールを確認
 
 ```bash
-# Test backend health
+# バックエンドのヘルスチェック
 curl http://localhost:8080/health
 
-# Test OGP verification
+# OGP 検証をテスト
 curl -X POST http://localhost:8080/api/v1/ogp/verify \
   -H "Content-Type: application/json" \
   -d '{"url":"https://github.com"}'
 
-# Access frontend
+# フロントエンドにアクセス
 open http://localhost:3000
 ```
 
-### 4. Stop Services
+### 4. サービスを停止
 
 ```bash
 docker-compose down

@@ -1,75 +1,75 @@
-# OGP Verification Service API Documentation
+# OGP 検証サービス API ドキュメント
 
-This directory contains the OpenAPI specification for the OGP Verification Service API.
+このディレクトリには、OGP 検証サービス API の OpenAPI 仕様が含まれています。
 
-## API Specification
+## API 仕様
 
-- **OpenAPI Version**: 3.0.3
-- **Specification File**: `openapi.yaml`
+- **OpenAPI バージョン**: 3.0.3
+- **仕様ファイル**: `openapi.yaml`
 
-## Viewing the Documentation
+## ドキュメントの表示
 
-### Option 1: Swagger UI (Recommended)
+### 方法 1: Swagger UI (推奨)
 
-To view the interactive API documentation using Swagger UI:
+Swagger UI を使用してインタラクティブな API ドキュメントを表示するには：
 
 ```bash
-# From the backend directory
+# backend ディレクトリから
 go run cmd/swagger/main.go
 ```
 
-Then open http://localhost:8081 in your browser.
+その後、ブラウザで http://localhost:8081 を開きます。
 
-### Option 2: Online Swagger Editor
+### 方法 2: オンライン Swagger エディター
 
-1. Go to https://editor.swagger.io/
-2. Copy the contents of `openapi.yaml`
-3. Paste into the editor
+1. https://editor.swagger.io/ にアクセス
+2. `openapi.yaml` の内容をコピー
+3. エディターに貼り付け
 
-### Option 3: VS Code Extension
+### 方法 3: VS Code 拡張機能
 
-Install the "OpenAPI (Swagger) Editor" extension in VS Code to view and edit the specification with syntax highlighting and validation.
+VS Code で "OpenAPI (Swagger) Editor" 拡張機能をインストールして、シンタックスハイライトと検証機能付きで仕様を表示・編集できます。
 
-## API Endpoints
+## API エンドポイント
 
-### Core Endpoints
+### コアエンドポイント
 
-- **POST /api/v1/ogp/verify** - Verify OGP metadata for a given URL
-- **GET /health** - Health check endpoint
+- **POST /api/v1/ogp/verify** - 指定された URL の OGP メタデータを検証
+- **GET /health** - ヘルスチェックエンドポイント
 
-### Rate Limiting
+### レート制限
 
-The API implements rate limiting:
-- **Limit**: 10 requests per minute per IP address
-- **Response**: HTTP 429 when limit exceeded
+API はレート制限を実装しています：
+- **制限**: IP アドレスあたり 10 リクエスト/分
+- **レスポンス**: 制限を超えた場合は HTTP 429
 
-### CORS Support
+### CORS サポート
 
-The API supports CORS with the following headers:
+API は以下のヘッダーで CORS をサポートしています：
 - `Access-Control-Allow-Origin: *`
 - `Access-Control-Allow-Methods: POST, OPTIONS`
 - `Access-Control-Allow-Headers: Content-Type`
 
-## Platform-Specific Limits
+## プラットフォーム固有の制限
 
-The API validates content against platform-specific limits:
+API はプラットフォーム固有の制限に対してコンテンツを検証します：
 
 ### Twitter/X
-- Title: 70 characters
-- Description: 200 characters
-- Recommended image: 1200x630px
+- タイトル: 70 文字
+- 説明: 200 文字
+- 推奨画像: 1200x630px
 
 ### Facebook
-- Title: 100 characters
-- Description: 300 characters
-- Recommended image: 1200x630px
+- タイトル: 100 文字
+- 説明: 300 文字
+- 推奨画像: 1200x630px
 
 ### Discord
-- Title: 256 characters
-- Description: 2048 characters
-- Flexible image dimensions
+- タイトル: 256 文字
+- 説明: 2048 文字
+- 画像サイズ: 柔軟
 
-## Example Request
+## リクエスト例
 
 ```bash
 curl -X POST http://localhost:8080/api/v1/ogp/verify \
@@ -77,7 +77,7 @@ curl -X POST http://localhost:8080/api/v1/ogp/verify \
   -d '{"url":"https://github.com"}'
 ```
 
-## Example Response
+## レスポンス例
 
 ```json
 {
@@ -122,14 +122,14 @@ curl -X POST http://localhost:8080/api/v1/ogp/verify \
 }
 ```
 
-## Security Considerations
+## セキュリティに関する考慮事項
 
-1. **Private IP Blocking**: The service blocks requests to private IP addresses
-2. **Rate Limiting**: 10 requests per minute per IP to prevent abuse
-3. **Request Timeout**: 10-second timeout for fetching external URLs
-4. **CORS**: Configured to allow cross-origin requests
+1. **プライベート IP ブロック**: サービスはプライベート IP アドレスへのリクエストをブロックします
+2. **レート制限**: 悪用を防ぐため IP あたり 10 リクエスト/分
+3. **リクエストタイムアウト**: 外部 URL の取得は 10 秒でタイムアウト
+4. **CORS**: クロスオリジンリクエストを許可するよう設定
 
-## Further Documentation
+## 関連ドキュメント
 
 - [Open Graph Protocol](https://ogp.me/)
 - [Twitter Cards](https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/abouts-cards)
